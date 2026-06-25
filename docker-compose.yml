@@ -16,7 +16,9 @@ services:
     build:
       context: .
       dockerfile: app/Dockerfile
-    environment: *app-env
+    environment:
+      <<: *app-env
+      PGBOUNCER_URL: postgresql+asyncpg://psych:psych@postgres:5432/psych
     command: ["gunicorn", "app.main:app", "-k", "uvicorn.workers.UvicornWorker", "-w", "2", "-b", "0.0.0.0:8000"]
     expose: ["8000"]
     depends_on:
