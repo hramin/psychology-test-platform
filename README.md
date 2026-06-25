@@ -64,6 +64,35 @@ docker compose run --rm web alembic -c app/alembic.ini upgrade head      # migra
 docker compose run --rm web python -m app.modules.catalog.seed           # seed catalog
 ```
 
+## JSON API (`/api/v1`)
+
+A reusable JSON surface runs **alongside** the HTML/HTMX app for separately-hosted
+clients (SPA, mobile, other services). It's a thin adapter over the same
+`service.py` — no business logic is duplicated, so the two surfaces never drift.
+Interactive docs at **`/docs`**; set `CORS_ORIGINS` (comma-separated) to your frontend's
+origin(s).
+
+| Method & path | Purpose |
+|---|---|
+| `GET  /api/v1/tests/{slug}` | Test metadata (title, demographics spec, answer options, scale order) |
+| `POST /api/v1/attempts` | Start an attempt — body `{ "demographics": {gender, age, class}, "slug"? }` → `201` + state |
+| `GET  /api/v1/attempts/{id}` | Attempt state (status, current_page, answered/total) |
+| `GET  /api/v1/attempts/{id}/questions[?page=N]` | Questions (+ saved answers); all, or one page |
+| `PATCH /api/v1/attempts/{id}/answers` | Merge answers — body `{ "answers": {"1":"yes", ...} }` |
+| `POST /api/v1/attempts/{id}/finish` | Score + interpret → result (`422` if incomplete) |
+| `GET  /api/v1/attempts/{id}/result` | Scores, T-values, interpretation, and chart payload |
+
+Errors are JSON (`{"detail": "..."}`, `422`/`404`); the HTML pages still render error pages.
+
+```bash
+# minimal flow
+curl -X POST localhost/api/v1/attempts -H 'content-type: application/json' \
+  -d '{"demographics":{"gender":"girl","age":15,"class":"نهم"}}'
+curl -X PATCH localhost/api/v1/attempts/<id>/answers -H 'content-type: application/json' \
+  -d '{"answers":{"1":"no","2":"no"}}'      # …answer all 130
+curl -X POST localhost/api/v1/attempts/<id>/finish
+```
+
 ## Project layout
 
 ```

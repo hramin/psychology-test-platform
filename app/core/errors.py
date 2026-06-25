@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from app.core.templating import templates
 
@@ -26,6 +27,11 @@ class ValidationError(AppError):
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _handle_app_error(request: Request, exc: AppError):
+        # JSON for the API surface, HTML for the server-rendered pages.
+        if request.url.path.startswith("/api/"):
+            return JSONResponse(
+                {"detail": exc.message}, status_code=exc.status_code
+            )
         return templates.TemplateResponse(
             request,
             "error.html",

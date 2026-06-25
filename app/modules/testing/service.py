@@ -157,6 +157,34 @@ def clamp_page(definition: dict, page: int) -> int:
     return max(0, min(page, total_pages(definition) - 1))
 
 
+async def set_answers(
+    attempt: Attempt, definition: dict, answers: dict[str, str]
+) -> list[int]:
+    """Merge an arbitrary set of answers (by question id) into the attempt.
+
+    Unlike ``record_answers`` (page-scoped, used by the HTML flow), this accepts
+    answers for any questions — the natural shape for a JSON API. Rejects unknown
+    ids and illegal option values. Returns the ids still unanswered overall.
+    """
+    valid = _valid_values(definition)
+    by_id = {q["id"]: q for q in definition["questions"]}
+
+    merged = dict(attempt.responses or {})
+    for key, value in answers.items():
+        try:
+            qid = int(key)
+        except (TypeError, ValueError):
+            raise ValidationError(f"شناسهٔ سؤال نامعتبر است: {key!r}")
+        if qid not in by_id:
+            raise ValidationError(f"سؤالی با شناسهٔ {qid} وجود ندارد.")
+        if value not in valid[qid]:
+            raise ValidationError(f"پاسخ نامعتبر برای سؤال {qid}.")
+        merged[str(qid)] = value
+
+    attempt.responses = merged
+    return [q["id"] for q in definition["questions"] if str(q["id"]) not in merged]
+
+
 async def finish_attempt(session: AsyncSession, attempt: Attempt) -> None:
     """Score + interpret + persist. Idempotent (a re-submit is a no-op)."""
     if attempt.status == "completed":

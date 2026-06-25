@@ -8,6 +8,7 @@ from the environment in real deployments — never commit a real `.env`.
 
 from __future__ import annotations
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +28,18 @@ class Settings(BaseSettings):
     pgbouncer_url: str = "postgresql+asyncpg://psych:psych@pgbouncer:6432/psych"
 
     redis_url: str = "redis://redis:6379/0"
+
+    # CORS for the JSON API (/api/v1) — set CORS_ORIGINS to a comma-separated
+    # list of allowed origins for a separately-hosted frontend. Default "*"
+    # (fine while the API is unauthenticated; tighten once auth/cookies land).
+    cors_origins: list[str] = ["*"]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, v):
+        if isinstance(v, str):
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v
 
     # Catalog seeding
     definition_seed_path: str = "mmpi_v1.json"
