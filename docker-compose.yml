@@ -54,7 +54,9 @@ services:
     environment:
       DATABASE_URL: postgres://psych:psych@postgres:5432/psych
       POOL_MODE: transaction
-      AUTH_TYPE: md5
+      # Postgres 16 stores passwords as SCRAM-SHA-256, so PgBouncer must speak
+      # SCRAM to clients too (md5 here causes "wrong password type" at login).
+      AUTH_TYPE: scram-sha-256
       MAX_CLIENT_CONN: "200"
       DEFAULT_POOL_SIZE: "25"
       LISTEN_PORT: "6432"
