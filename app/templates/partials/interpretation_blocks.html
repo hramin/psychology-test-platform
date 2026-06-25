@@ -1,0 +1,34 @@
+<div class="interp-section">
+  <h4>۱. ارزیابی الگوی روایی و اعتبار پاسخ‌دهی (Validity)</h4>
+  {% for v in interpretation.validity %}
+    <div class="interp {{ 'sev-flag' if v.elevated else 'sev-ok' }}">
+      <div class="head">
+        <span class="name">{{ v.name }} — (نمرهٔ T: {{ v.t | fa }})</span>
+        <span class="badge">{{ 'شاخص پدیدارِ بالا' if v.elevated else 'در محدودهٔ نرمال' }}</span>
+      </div>
+      <p class="desc"><strong>هدف ارزیابی:</strong> {{ v.desc }}</p>
+      {% if v.elevated %}<p class="text">{{ v.high }}</p>{% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+<div class="interp-section" style="margin-top:1.4rem;">
+  <h4>۲. ارزیابی شاخص‌های بالینی و تکمیلی (Clinical)</h4>
+  {% if interpretation.all_normal %}
+    <div class="all-normal">
+      شواهد بالینی حاکی از نرمال بودن کل پروفایل مراجع است؛ نمرات در همهٔ مقیاس‌های
+      بالینی پایین‌تر از خط برش T=۶۵ ثبت شده‌اند.
+    </div>
+  {% else %}
+    {% for c in interpretation.clinical %}
+      <div class="interp sev-{{ c.severity }}">
+        <div class="head">
+          <span class="name">{{ c.name }} — (نمرهٔ T: {{ c.t | fa }})</span>
+          <span class="badge">{{ 'وضعیت اختلال شدید' if c.severity == 'severe' else 'وضعیت بالینی محتاط' }}</span>
+        </div>
+        <p class="desc"><strong>تعریف مقیاس:</strong> {{ c.desc }}</p>
+        <p class="text"><strong>تفسیر بالینی:</strong> {{ c.high }}</p>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card">
+  <h2 class="card-title">{{ title }}</h2>
+  <p class="lead">
+    برای شروع آزمون، اطلاعات زیر را تکمیل کنید. «جنسیت» برای انتخاب جدول هنجار
+    اختصاصی استفاده می‌شود و در محاسبهٔ نمرات استاندارد نقش دارد.
+  </p>
+</div>
+<div class="card">
+  {% include "partials/start_form.html" %}
+</div>
+{% endblock %}

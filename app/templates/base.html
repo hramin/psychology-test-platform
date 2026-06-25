@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}سامانه آزمون‌های روان‌شناختی{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/tokens.css" />
+  <!-- HTMX: vendored, with CDN fallback if the local asset is unavailable -->
+  <script src="/static/js/htmx.min.js"
+          onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js';document.head.appendChild(s);"></script>
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      {% block logo %}
+      <a class="brand-logo" href="/">
+        <span class="mark">ψ</span>
+        <span>سامانه ارزیابی روان‌شناختی</span>
+      </a>
+      {% endblock %}
+      {% block header_extra %}{% endblock %}
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    {% block footer %}
+    سامانهٔ یکپارچهٔ ارزیابی و نیمرخ روان‌شناختی — نسخهٔ بومی
+    {% endblock %}
+  </footer>
+</body>
+</html>

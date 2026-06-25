@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}خطا{% endblock %}
+{% block content %}
+<div class="card">
+  <h2 class="card-title">خطا {{ status_code | fa }}</h2>
+  <p>{{ message }}</p>
+  <a class="btn" href="/">بازگشت به صفحهٔ نخست</a>
+</div>
+{% endblock %}

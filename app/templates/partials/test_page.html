@@ -1,0 +1,43 @@
+<div id="test-area">
+  <form hx-post="/attempt/{{ attempt.id }}/page/{{ page }}" hx-target="#test-area" hx-swap="outerHTML">
+    <div class="test-head">
+      <span class="page-pill">صفحهٔ {{ (page + 1) | fa }} از {{ total | fa }}</span>
+      <div class="progress"><span style="width: {{ pct }}%"></span></div>
+    </div>
+
+    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+    {% for q in questions %}
+      <div class="q">
+        <div class="stem">
+          <span class="num">{{ q.id | fa }}</span>
+          <p>{{ q.text }}</p>
+        </div>
+        <div class="opts">
+          {% for opt in answer_options %}
+            <label class="opt">
+              <input type="radio" name="q-{{ q.id }}" value="{{ opt.value }}"
+                     {% if q.selected == opt.value %}checked{% endif %}>
+              <span>{{ opt.label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+
+    <div class="nav-row">
+      <div>
+        {% if not is_first %}
+          <button type="submit" name="dir" value="prev" class="btn ghost">صفحهٔ قبل</button>
+        {% endif %}
+      </div>
+      <div>
+        {% if is_last %}
+          <button type="submit" name="dir" value="finish" class="btn">اتمام و محاسبهٔ پروفایل</button>
+        {% else %}
+          <button type="submit" name="dir" value="next" class="btn">صفحهٔ بعد</button>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,82 @@
+# Dev compose. One app image; web (and future workers) differ only by command.
+# Environment is set inline with safe dev defaults so `docker compose up --build`
+# works with no hand-edited .env. Real deployments supply secrets via the
+# environment / .env (see .env.example).
+
+x-app-env: &app-env
+  APP_ENV: dev
+  SECRET_KEY: dev-insecure-secret-change-me
+  DATABASE_URL: postgresql+asyncpg://psych:psych@postgres:5432/psych
+  PGBOUNCER_URL: postgresql+asyncpg://psych:psych@pgbouncer:6432/psych
+  REDIS_URL: redis://redis:6379/0
+  DEFINITION_SEED_PATH: mmpi_v1.json
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    environment: *app-env
+    command: ["gunicorn", "app.main:app", "-k", "uvicorn.workers.UvicornWorker", "-w", "2", "-b", "0.0.0.0:8000"]
+    expose: ["8000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./app/static:/static:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: psych
+      POSTGRES_USER: psych
+      POSTGRES_PASSWORD: psych
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psych -d psych"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DATABASE_URL: postgres://psych:psych@postgres:5432/psych
+      POOL_MODE: transaction
+      AUTH_TYPE: md5
+      MAX_CLIENT_CONN: "200"
+      DEFAULT_POOL_SIZE: "25"
+      LISTEN_PORT: "6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redisdata:/data
+
+  # Inert in this slice (no bucket/layout created) — present so the storage tier
+  # exists for Phase 6 (PDF reports). Web does not depend on it.
+  garage:
+    image: dxflrs/garage:v1.0.1
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - garagedata:/var/lib/garage
+
+volumes:
+  pgdata: {}
+  redisdata: {}
+  garagedata: {}
