@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}نتیجهٔ آزمون — {{ title }}{% endblock %}
+{% block head_extra %}
+<script src="/static/js/chart.umd.min.js"
+        onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';document.head.appendChild(s);"></script>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+    <div>
+      <h2 style="margin:0;">نیمرخ و کارنامهٔ آزمون روان‌شناختی</h2>
+      <p class="lead" style="margin:.4rem 0 0;">
+        {% for d in definition.demographics %}
+          {%- set val = demographics.get(d.key) -%}
+          {{ d.label }}:
+          {%- if d.type == 'choice' -%}
+            {%- for o in d.options if o.value == val %} {{ o.label }}{% endfor -%}
+          {%- else %} {{ val | fa }}{%- endif -%}
+          {%- if not loop.last %} &nbsp;·&nbsp; {% endif -%}
+        {% endfor %}
+      </p>
+    </div>
+    <a class="btn ghost" href="/">شروع آزمون جدید</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">پروفایل تفکیکی نمرات استاندارد (T-Score)</h3>
+  <div id="chart-wrapper" dir="ltr">
+    <div class="chart-box"><canvas id="profileChart"></canvas></div>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="score-table">
+      <thead>
+        <tr>
+          <th class="rowhead">شاخص / مقیاس</th>
+          {% for s in scale_order %}<th>{{ s }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="rowhead">نمرهٔ خام</td>
+          {% for r in table %}<td>{{ r.raw | fa }}</td>{% endfor %}
+        </tr>
+        <tr>
+          <td class="rowhead">میانگین هنجار</td>
+          {% for r in table %}<td>{{ '%.2f' | format(r.mean) | fa }}</td>{% endfor %}
+        </tr>
+        <tr class="t-row">
+          <td class="rowhead">نمرهٔ تراز T</td>
+          {% for r in table %}<td class="t-cell {{ r.band }}">{{ r.t | fa }}</td>{% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">گزارش و تفسیر روان‌شناختی</h3>
+  {% include "partials/interpretation_blocks.html" %}
+</div>
+
+<script>
+  const CHART = {{ chart | tojson }};
+  (function init() {
+    if (typeof Chart === 'undefined') { return setTimeout(init, 50); }
+
+    const guides = {
+      id: 'guides',
+      afterDraw(chart) {
+        const { ctx, scales: { x, y }, chartArea: { left, right, top, bottom } } = chart;
+        ctx.save();
+        const lineStyle = { baseline: 'rgba(100,116,139,0.55)', caution: '#b45309', severe: '#b91c1c' };
+        const labelText = { baseline: 'خط پایه / میانگین جامعه (T=50)', caution: 'خط مرز بالینی (T=65)', severe: 'مرز اختلال شدید (T=70)' };
+        CHART.ref_lines.forEach(function (rl) {
+          const yy = y.getPixelForValue(rl.t);
+          ctx.strokeStyle = lineStyle[rl.kind];
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash(rl.kind === 'baseline' ? [4, 4] : []);
+          ctx.beginPath(); ctx.moveTo(left, yy); ctx.lineTo(right, yy); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = lineStyle[rl.kind];
+          ctx.font = '10px Vazirmatn';
+          ctx.textAlign = rl.kind === 'caution' ? 'right' : 'left';
+          ctx.fillText(labelText[rl.kind], rl.kind === 'caution' ? right - 6 : left + 6, yy - 4);
+        });
+        // vertical divider between validity (…K) and clinical (Hs…)
+        const di = CHART.divider_index;
+        const xd = (x.getPixelForValue(di - 1) + x.getPixelForValue(di)) / 2;
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(xd, top); ctx.lineTo(xd, bottom); ctx.stroke();
+        ctx.font = 'bold 11px Vazirmatn'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#475569'; ctx.fillText('مقیاس‌های روایی', (left + xd) / 2, top - 6);
+        ctx.fillStyle = '#00795a'; ctx.fillText('مقیاس‌های بالینی و تکمیلی', (xd + right) / 2, top - 6);
+        ctx.restore();
+      }
+    };
+
+    new Chart(document.getElementById('profileChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: CHART.labels,
+        datasets: [
+          { label: 'روایی', data: CHART.validity, borderColor: '#334155', backgroundColor: 'transparent', borderWidth: 3, pointBackgroundColor: '#334155', pointRadius: 4, tension: 0, spanGaps: false },
+          { label: 'بالینی', data: CHART.clinical, borderColor: '#00a379', backgroundColor: 'transparent', borderWidth: 3, pointBackgroundColor: '#00795a', pointRadius: 4, tension: 0, spanGaps: false }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        layout: { padding: { top: 24, left: 8, right: 8, bottom: 4 } },
+        scales: {
+          x: { ticks: { font: { family: 'Vazirmatn', size: 12, weight: 'bold' } }, grid: { display: false } },
+          y: { min: CHART.y_min, max: CHART.y_max, ticks: { stepSize: 10, font: { size: 10 } } }
+        }
+      },
+      plugins: [guides]
+    });
+  })();
+</script>
+{% endblock %}

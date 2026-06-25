@@ -1,0 +1,30 @@
+<div id="start-area">
+  {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+  <form hx-post="/attempt" hx-target="#start-area" hx-swap="outerHTML">
+    {% for field in demographics %}
+      <div class="field">
+        <label>{{ field.label }}{% if field.required %} <span style="color:var(--severe)">*</span>{% endif %}</label>
+        {% if field.type == 'choice' %}
+          <div class="choice-row">
+            {% for opt in field.options %}
+              <label class="choice">
+                <input type="radio" name="{{ field.key }}" value="{{ opt.value }}"
+                       {% if values.get(field.key) == opt.value %}checked{% endif %}>
+                <span>{{ opt.label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        {% elif field.type == 'int' %}
+          <input type="number" name="{{ field.key }}" value="{{ values.get(field.key, '') }}"
+                 {% if field.min is defined %}min="{{ field.min }}"{% endif %}
+                 {% if field.max is defined %}max="{{ field.max }}"{% endif %}
+                 placeholder="{{ field.label }}">
+        {% else %}
+          <input type="text" name="{{ field.key }}" value="{{ values.get(field.key, '') }}"
+                 placeholder="{{ field.label }}">
+        {% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn block">ورود و شروع پاسخ‌دهی به سؤالات</button>
+  </form>
+</div>

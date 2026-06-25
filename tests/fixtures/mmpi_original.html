@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه جامع آزمون‌های روان‌شناختی نوجوانان</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; }
+        
+        /* تنظیمات اختصاصی پنهان‌سازی و صفحه‌بندی هوشمند برای نسخه پرینت */
+        @media print {
+            header, footer, button, .no-print, #step-register, #step-test, #step-database {
+                display: none !important;
+            }
+            html, body {
+                width: 210mm; /* ابعاد استاندارد A4 */
+                height: 297mm;
+                background-color: white !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            main {
+                padding: 10mm !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            .print-visible {
+                display: block !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .card-print {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin-bottom: 15px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            /* فیت کردن کامل نمودار در عرض صفحه چاپی */
+            #chart-wrapper {
+                width: 100% !important;
+                max-width: 100% !important;
+                display: block !important;
+            }
+            canvas {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 220px !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
+
+    <header class="bg-blue-600 text-white shadow-md p-4 sticky top-0 z-50 no-print">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold cursor-pointer select-none" ondblclick="triggerAdminAccess()" title="دوبار کلیک جهت ورود مدیریت">
+                نرم‌افزار ارزیابی روان‌شناختی نوجوانان (۱۳ مقیاسی)
+            </h1>
+            <div class="flex items-center gap-4">
+                <div id="user-badge" class="hidden text-sm bg-blue-800 px-3 py-1 rounded-full"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl w-full mx-auto p-4 flex-grow flex flex-col justify-center">
+        
+        <section id="step-database" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-100 w-full mb-6 no-print">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-lg font-bold text-gray-900">🗂️ پایگاه داده و پرونده‌های ثبت شده مراجعین (پنل مدیریت)</h2>
+                <button onclick="closeDatabase()" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg">بستن ×</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-700 border-b">
+                            <th class="p-3">نام مراجع</th>
+                            <th class="p-3">جنسیت</th>
+                            <th class="p-3">سن / پایه</th>
+                            <th class="p-3">تاریخ ثبت پرونده</th>
+                            <th class="p-3 text-center">عملیات بالینی</th>
+                        </tr>
+                    </thead>
+                    <tbody id="database-rows" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="step-register" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 max-w-md mx-auto w-full no-print">
+            <h2 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">ثبت‌نام مراجع نوجوان</h2>
+            <form id="reg-form" onsubmit="startTest(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">نام و نام خانوادگی:</label>
+                    <input type="text" id="user-name" required class="w-full border p-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">سن (سال):</label>
+                        <input type="number" id="user-age" min="10" max="20" required class="w-full border p-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">پایه تحصیلی / کلاس:</label>
+                        <input type="text" id="user-class" required class="w-full border p-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="مثلاً نهم">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">جنسیت (جهت اعمال جدول هنجار اختصاصی):</label>
+                    <div class="flex gap-6">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="gender" value="girl" checked class="w-4 h-4 text-blue-600"> دختر
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="gender" value="boy" class="w-4 h-4 text-blue-600"> پسر
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold transition">ورود و شروع پاسخ‌دهی به سؤالات</button>
+            </form>
+        </section>
+
+        <section id="step-test" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-100 w-full space-y-6 no-print">
+            <div class="flex justify-between items-center border-b pb-4">
+                <span id="page-indicator" class="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full"></span>
+                <div class="w-2/3 bg-gray-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-blue-600 h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="questions-container" class="space-y-4 divide-y divide-gray-100"></div>
+
+            <div class="flex justify-between items-center pt-4 border-t">
+                <button onclick="prevPage()" id="btn-prev" class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition">صفحه قبل</button>
+                <button onclick="nextPage()" id="btn-next" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition">صفحه بعد</button>
+                <button onclick="finishTest()" id="btn-submit" class="hidden px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition">اتمام آزمون و محاسبه پروفایل</button>
+            </div>
+        </section>
+
+        <section id="step-report" class="hidden space-y-6 w-full">
+            
+            <div class="hidden print-visible border-b-2 border-gray-800 pb-3 mb-4">
+                <h2 class="text-center text-xl font-bold mb-4">گزارش نیمرخ و کارنامه نهایی آزمون روان‌شناختی نوجوانان</h2>
+                <div class="grid grid-cols-4 gap-2 text-sm">
+                    <div><strong>نام مراجع:</strong> <span id="print-name"></span></div>
+                    <div><strong>جنسیت:</strong> <span id="print-gender"></span></div>
+                    <div><strong>سن:</strong> <span id="print-age"></span> سال</div>
+                    <div><strong>پایه تحصیلی:</strong> <span id="print-class"></span></div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center no-print mb-2">
+                <button onclick="showRegisterSection()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl transition text-sm">← بازگشت به صفحه اصلی</button>
+                <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition flex items-center gap-2">
+                    🖨️ چاپ کارنامه / خروجی PDF استاندارد
+                </button>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-print">
+                <h2 class="text-base font-bold text-gray-900 border-b pb-2 mb-2 no-print">پروفایل و نمودار تفکیکی نمرات استاندارد (T-Score)</h2>
+                <div id="chart-wrapper" class="w-full block" dir="ltr" style="position: relative; max-width: 100%;">
+                    <div style="position: relative; width: 100%; height: 230px;">
+                        <canvas id="profileChart"></canvas>
+                    </div>
+                </div>
+                <div id="table-container" class="mt-4 overflow-x-auto"></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-print page-break">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">گزارش و تفسیر روان‌شناختی شخصی‌سازی شده مراجع</h3>
+                <div class="mb-6">
+                    <h4 class="text-sm font-bold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg mb-3">۱. ارزیابی الگوی روایی و اعتبار پاسخ‌دهی (Validity Scales)</h4>
+                    <div id="validity-interpretation" class="space-y-3 text-justify leading-relaxed"></div>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg mb-3">۲. ارزیابی شاخص‌های بالینی و مهارتی (Clinical Scales)</h4>
+                    <div id="clinical-interpretation" class="space-y-3 text-justify leading-relaxed"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-100 border-t text-center text-xs text-gray-500 py-3 no-print">
+        سیستم یکپارچه مدیریت مراجعین و نیمرخ روان‌شناختی روان‌سنجی بومی
+    </footer>
+
+    <script>
+        // جداول هنجار بومی
+        const normTable = {
+            girl: {
+                L: { mean: 5.944, sd: 1.780 }, F: { mean: 3.274, sd: 1.917 }, K: { mean: 6.267, sd: 1.996 },
+                Hs: { mean: 2.116, sd: 2.257 }, D: { mean: 5.019, sd: 3.093 }, Hy: { mean: 4.921, sd: 2.192 },
+                Pa: { mean: 5.552, sd: 2.578 }, Sc: { mean: 4.802, sd: 2.781 }, Ma: { mean: 4.717, sd: 2.188 },
+                Pd: { mean: 5.319, sd: 2.377 }, Si: { mean: 5.612, sd: 2.341 }, PK: { mean: 5.379, sd: 2.600 },
+                A: { mean: 6.034, sd: 2.317 }
+            },
+            boy: {
+                L: { mean: 5.925, sd: 1.588 }, F: { mean: 3.140, sd: 1.940 }, K: { mean: 6.290, sd: 2.092 },
+                Hs: { mean: 2.383, sd: 2.490 }, D: { mean: 4.533, sd: 2.745 }, Hy: { mean: 4.561, sd: 2.093 },
+                Pa: { mean: 5.112, sd: 2.373 }, Sc: { mean: 4.636, sd: 2.312 }, Ma: { mean: 5.336, sd: 2.096 },
+                Pd: { mean: 5.243, sd: 2.591 }, Si: { mean: 5.246, sd: 2.237 }, PK: { mean: 4.841, sd: 2.380 },
+                A: { mean: 5.916, sd: 2.093 }
+            }
+        };
+
+        const scaleOrder = ["L", "F", "K", "Hs", "D", "Hy", "Pa", "Sc", "Ma", "Pd", "Si", "PK", "A"];
+
+        const scaleMeta = {
+            L: { name: "دروغ‌سنجی (L)", type: "validity", desc: "تمایل فرد به نشان‌دادن خود به‌شکل آرمانی و اخلاقی، و انکار ضعف‌های رایج انسانی را می‌سنجد.", high: "بالا بودن نمره در این مقیاس نشان‌دهنده تدافع شدید، گرایش مراجع به ارائه تصویری بی‌نقص و اغراق‌آمیز از رفتارهای پسندیده اجتماعی و کتمان نقایص جزیی خود است. این وضعیت می‌تواند ناشی از هنجارطلبی مفرط یا تلاش عمدی برای خوب جلوه دادن خود باشد؛ لذا بررسی دقیق اعتبار سایر مقیاس‌ها و انجام مصاحبه تکمیلی پیشنهاد می‌شود." },
+            F: { name: "نابسامدی (F)", type: "validity", desc: "میزان پاسخ‌های غیرمعمول و نادر را نشان می‌دهد؛ شاخصی از آشفتگی روانی، پاسخ‌دهی تصامفی یا بزرگ‌نمایی مشکلات.", high: "احتمال وجود آشفتگی روان‌شناختی شدید، تمایل به بزرگ‌نمایی مشکلات جهت جلب توجه بالینی یا ناتوانی در تمرکز بر سوالات. تفسیر نیمرخ باید با احتیاط صورت گیرد." },
+            K: { name: "تدافع (K)", type: "validity", desc: "گرایش به پنهان‌کردن مشکلات روانی و حفظ تصویر کنترل‌شده از خود را اندازه می‌گیرد.", high: "تدافع شدید در برابر آشکارسازی تعارضات درونی. مراجع تلاش دارد تصویر فردی کاملاً سازگار و مسلط بر امور را به نمایش بگذارد." },
+            Hs: { name: "خودبیمارانگاری (Hs)", type: "clinical", desc: "اشتغال ذهنی مفرط با سلامت جسمانی و شکایات بدنی متعدد.", high: "برجسته‌بودن تمرکز مراجع روی علائم مبهم بدنی و خستگی؛ احتمال استفاده از شکایات جسمی برای فرار از تعارضات روانی یا تحصیلی." },
+            D: { name: "افسردگی (D)", type: "clinical", desc: "خلق پایین، ناامیدی، نارضایتی و کاهش سطح کلی انرژی مراجع.", high: "وجود نشانه‌های بارز خلق غمگین، احساس بدبینی نسبت به آینده و افت انگیزه در فعالیت‌های روزمره نوجوان." },
+            Hy: { name: "هیستری (Hy)", type: "clinical", desc: "گرایش به بروز تنش روانی در قالب نشانه‌های جسمانی ناگهانی و نیاز مفرط به پذیرفته‌شدن.", high: "تمایل به حل تعارضات بین‌فردی از طریق شبیه‌سازی بیماری جسمی؛ وابستگی هیجانی بالا به تایید دیگران." },
+            Pa: { name: "پارانویا (Pa)", type: "clinical", desc: "حساسیت بین‌فردی، بدگمانی، زودرنجی و احساس مورد بی‌عدالتی قرارگرفتن.", high: "حساسیت بیش از حد به انتقاد، بدگمانی نسبی به نیت اطرافیان و معلمان؛ احتمال جبهه‌گیری در تعاملات اجتماعی." },
+            Sc: { name: "اسکیزوفرنیا (Sc)", type: "clinical", desc: "احساس بیگانگی عمیق، تفکر غیرمعمول، گوشه‌گیری و آشفتگی ادراکی.", high: "احساس تنهایی شدید، افکار ناسازگار یا تجارب ادراکی غیرمعمول؛ نیاز به بررسی جامع و ارزیابی تخصصی ساختار تفکر." },
+            Ma: { name: "هیپومانیا (Ma)", type: "clinical", desc: "سطح بالای انرژی، تحریک‌پذیری، پرتحرکی و رفتارهای تکانشی.", high: "پرانرژی بودن مفرط، بیقراری، تکانشگری در تصمیم‌گیری و کم‌تحملی؛ گرایش بالایی به رفتارهای پرخطر هیجانی." },
+            Pd: { name: "انحراف روانی (Pd)", type: "clinical", desc: "مشکل با مرجعیت و قانون، تعارض شدید خانوادگی و رفتارهای ناسازگارانه اجتماعی.", high: "وجود تعارضات آشکار با والدین، مراجع قدرت مدرسه یا جامعه؛ کم‌تحملی شدید در برابر قوانین و ساختارهای نظارتی." },
+            Si: { name: "درون‌گرایی اجتماعی (Si)", type: "clinical", desc: "منعکس‌کننده کم‌رویی، تمایل زیاد به انزوا و محدود بودن ارتباطات همسالان.", high: "کم‌رویی بارز، تمایل زیاد به انزوا، محدود بودن ارتباطات همسالان و ترجیح تنهایی به حضور در محیط‌های گروهی." },
+            PK: { name: "اختلال استرس پس از سانحه (PK)", type: "clinical", desc: "نشانه‌های مرتبط با تجربه آسیب روانی، اضطراب هجوم‌آور و بیش‌برانگیختگی.", high: "وجود اضطراب حاد ناشی از یادآوری تجارب یا حوادث ناگوار گذشته؛ بیش‌برانگیختگی و گارد دفاعی بالا." },
+            A: { name: "اضطراب (A)", type: "clinical", desc: "سطح کلی ناراحتی روان‌شناختی، تنش و آشفتگی هیجانی فرد.", high: "سطح بالایی از تنش درونی، دلشوره مداوم، بی‌ثباتی هیجانی و دغدغه‌های ذهنی اضطراب‌آور در زمان حال." }
+        };
+
+        // بانک سؤالات تصحیح شده بر اساس سند ساختاری پرسشنامه
+        const questions = [
+            { id: 1, scale: "L", isReverse: false, text: "هیچ وقت در زندگی ام به کسی دروغ نگفته ام" },
+            { id: 2, scale: "F", isReverse: false, text: "گاهی احساس میکنم که دیگران میتوانند بدون حرف زدن بفهمند چه فکر میکنم" },
+            { id: 3, scale: "Hs", isReverse: false, text: "من اغلب نگران این هستم که بیماری جدی ای داشته باشم که هنوز تشخیص داده نشده." },
+            { id: 4, scale: "K", isReverse: false, text: "من معمولاً میتوانم احساساتم را به خوبی مدیریت کنم" },
+            { id: 5, scale: "D", isReverse: false, text: "بیشتر روزهای هفته احساس غمگینی میکنم که دلیل مشخصی ندارد." },
+            { id: 6, scale: "Hy", isReverse: false, text: "وقتی با کسی دعوا میکنم یا ناراحت میشوم بدنم دردهایی پیدا میکند که بعداً خودبه خود خوب می شوند." },
+            { id: 7, scale: "Pa", isReverse: false, text: "گاهی فکر میکنم وقتی وارد جایی میشوم بقیه درباره من حرف میزنند." },
+            { id: 8, scale: "Sc", isReverse: false, text: "احساس میکنم هیچ کس واقعاً مرا نمی فهمد حتی نزدیک ترین افراد." },
+            { id: 9, scale: "Ma", isReverse: false, text: "انرژی من بیشتر از اکثر هم سن و سال هایم است." },
+            { id: 10, scale: "Pd", isReverse: false, text: "گاهی کارهایی کرده ام که میدانستم درست نیست ولی برایم مهم نبود." },
+            { id: 11, scale: "Si", isReverse: false, text: "جمع های بزرگ احساس ناراحتی میکنم" },
+            { id: 12, scale: "PK", isReverse: false, text: "من اغلب کابوسهای تکرار شونده ای درباره یک اتفاق وحشتناک دارم" },
+            { id: 13, scale: "A", isReverse: false, text: "حجم تکالیف و امتحانات آنقدر زیاد است که احساس میکنم وقت کافی ندارم" },
+            { id: 14, scale: "L", isReverse: false, text: "حتی وقتی کسی مرا ناراحت میکند هیچ وقت از دست او عصبانی نمیشوم" },
+            { id: 15, scale: "F", isReverse: false, text: "گاهی صداهایی میشنوم که مطمئن نیستم واقعی هستند." },
+            { id: 16, scale: "K", isReverse: false, text: "وقتی اتفاق بدی میافتد خیلی زود به حالت عادی بر می گردم" },
+            { id: 17, scale: "Hs", isReverse: false, text: "وقتی علامت جسمانی جدیدی در بدنم حس میکنم اولین فکرم این است که شاید بیماری خطرناکی باشد." },
+            { id: 18, scale: "D", isReverse: false, text: "گاهی بدون دلیل خاصی گریه ام میگیرد یا بغض دارم" },
+            { id: 19, scale: "Hy", isReverse: false, text: "در موقعیت های پرتنش گاهی دستم یا پایم بی حس میشود یا نمیتوانم آن را درست حرکت دهم" },
+            { id: 20, scale: "Pa", isReverse: false, text: "احساس میکنم بعضی افراد عمداً کارهایی میکنند تا من ناراحت شوم." },
+            { id: 21, scale: "Sc", isReverse: false, text: "ترجیح میدهم تنها باشم چون بودن با دیگران خسته کننده و بی معناست." },
+            { id: 22, scale: "Ma", isReverse: false, text: "گاهی آن قدر سریع حرف میزنم که دیگران می گویند نمی فهمند." },
+            { id: 23, scale: "Pd", isReverse: false, text: "وقتی مطمئنم گیر نمیافتم قوانین را زیر پا می گذارم" },
+            { id: 24, scale: "Si", isReverse: false, text: "پیدا کردن دوستان جدید برایم دشوار است." },
+            { id: 25, scale: "PK", isReverse: false, text: "گاهی ناگهان خاطرات تلخ گذشته بدون اینکه بخواهم به ذهنم هجوم می آورند." },
+            { id: 26, scale: "A", isReverse: false, text: "معمولاً ترجیح میدهم مشکلاتم را آن قدر کوچک جلوه بدهم که کسی نگرانم نشود." },
+            { id: 27, scale: "L", isReverse: false, text: "در طول زندگی ام تقریباً هیچ اشتباهی نکرده ام که بعداً از آن پشیمان شوم" },
+            { id: 28, scale: "F", isReverse: false, text: "گاهی احساس میکنم افکارم آن قدر عجیب هستند که نمیتوانم آنها را برای کسی توضیح بدهم." },
+            { id: 29, scale: "K", isReverse: false, text: "کمتر پیش می آید که چیزی واقعاً حالم را خراب کند." },
+            { id: 30, scale: "Hs", isReverse: false, text: "حتی وقتی آزمایشهایم طبیعی است باز هم نگرانم که چیزی از قلم افتاده باشد." },
+            { id: 31, scale: "D", isReverse: false, text: "کارهایی که قبلاً برایم جالب بودند دیگر برایم اهمیتی ندارند." },
+            { id: 32, scale: "Hy", isReverse: false, text: "وقتی خیلی نگران یا ترسیده ام گاهی صدایم در نمی آید یا نمیتوانم درست حرف بزنم." },
+            { id: 33, scale: "Pa", isReverse: false, text: "گاهی حس میکنم کسی حرکاتم را زیر نظر دارد." },
+            { id: 34, scale: "Sc", isReverse: false, text: "گاهی احساس میکنم هیچ احساسی ندارم انگار از درون خالی هستم." },
+            { id: 35, scale: "Ma", isReverse: false, text: "دوره هایی دارم که خیلی کمتر از معمول نیاز به خواب دارم ولی باز هم پرانرژی هستم" },
+            { id: 36, scale: "Pd", isReverse: false, text: "در خانواده ام احساس میکنم کسی واقعاً مرا نمی فهمد." },
+            { id: 37, scale: "Si", isReverse: false, text: "دوست ندارم مرکز توجه باشم" },
+            { id: 38, scale: "PK", isReverse: false, text: "گاهی احساس میکنم آن اتفاق بد دوباره دارد اتفاق میافتد انگار همین الان است." },
+            { id: 39, scale: "A", isReverse: false, text: "انتظارات خانواده ام از من بیشتر از چیزی است که میتوانم انجام دهم." },
+            { id: 40, scale: "L", isReverse: true, text: "گاهی وقتی کسی مرا عصبانی میکند دلم میخواهد چیزی تند بگویم." },
+            { id: 41, scale: "F", isReverse: false, text: "بدنم گاهی بدون دلیل بی حس یا سنگین میشود." },
+            { id: 42, scale: "K", isReverse: false, text: "من ترجیح میدهم مشکلاتم را خودم حل کنم تا اینکه با کسی در میان بگذارم" },
+            { id: 43, scale: "Hs", isReverse: false, text: "من به طور مداوم بدنم را برای یافتن علائم غیر عادی بررسی میکنم" },
+            { id: 44, scale: "D", isReverse: false, text: "حتی وقتی اتفاق خوبی می افتد نمیتوانم واقعاً خوشحال شوم." },
+            { id: 45, scale: "Hy", isReverse: false, text: "پزشکان برای مشکلات جسمی من دلیل پزشکی پیدا نمیکنند اما من مطمئنم که واقعی هستند." },
+            { id: 46, scale: "Pa", isReverse: false, text: "به سختی میتوانم به دوستانم اعتماد کنم حتی وقتی دلیلی برای شک ندارم" },
+            { id: 47, scale: "Sc", isReverse: false, text: "وقتی اتفاق بدی می افتد نه غم دارم نه ترس فقط بی تفاوتم." },
+            { id: 48, scale: "Ma", isReverse: false, text: "گاهی احساس میکنم از بقیه هم سن و سالهایم باهوش تر یا توانمندتر هستم" },
+            { id: 49, scale: "Pd", isReverse: false, text: "اغلب با والدینم دعوا دارم و احساس میکنم آنها ناعادلانه رفتار میکنند." },
+            { id: 50, scale: "Si", isReverse: false, text: "بودن در جمع مرا خسته میکند." },
+            { id: 51, scale: "PK", isReverse: false, text: "گاهی اتفاقی کوچک کافی است تا ناگهان خاطره ناراحت کننده گذشته دوباره زنده شود." },
+            { id: 52, scale: "A", isReverse: false, text: "تنشها و مشکلات خانوادگی ذهن مرا مشغول می کنند." },
+            { id: 53, scale: "L", isReverse: true, text: "گاهی از اینکه دوستانم چیزهایی دارند که من ندارم ناراحت میشوم" },
+            { id: 54, scale: "F", isReverse: false, text: "من چیزهایی میبینم که به نظر میرسد دیگران متوجه آنها نمی شوند." },
+            { id: 55, scale: "K", isReverse: false, text: "به ندرت پیش می آید که از دست کسی واقعاً عصبانی شوم." },
+            { id: 56, scale: "Hs", isReverse: false, text: "من بیشتر از هم سن و سالهایم به پزشک مراجعه میکنم یا دوست دارم مراجعه کنم" },
+            { id: 57, scale: "D", isReverse: false, text: "احساس میکنم به عنوان یک آدم ارزش زیادی ندارم" },
+            { id: 58, scale: "Hy", isReverse: false, text: "وقتی استرس دارم سرگیجه یا حالت تهوع پیدا میکنم که با استراحت خوب میشود." },
+            { id: 59, scale: "Pa", isReverse: false, text: "وقتی کسی با من مهربان است اول فکر میکنم چه چیزی از من میخواهد." },
+            { id: 60, scale: "Sc", isReverse: false, text: "گاهی احساس میکنم دنیا یا خودم واقعی نیست." },
+            { id: 61, scale: "Ma", isReverse: false, text: "گاهی احساس میکنم برای کارهای بزرگ و خاصی در نظر گرفته شده ام." },
+            { id: 62, scale: "Pd", isReverse: false, text: "احساس میکنم دیگران در گذشته از من سوء استفاده کرده اند." },
+            { id: 63, scale: "Si", isReverse: false, text: "ترجیح میدهم بیشتر وقتم را تنها باشم" },
+            { id: 64, scale: "PK", isReverse: false, text: "سعی میکنم به آن اتفاق فکر نکنم یا درباره اش حرف نزنم" },
+            { id: 65, scale: "A", isReverse: false, text: "احساس میکنم باید همیشه خودم را به دیگران ثابت کنم" },
+            { id: 66, scale: "L", isReverse: true, text: "گاهی وقتی قانونی به نظرم بی معنی میرسد دلم میخواهد آن را نادیده بگیرم" },
+            // اصلاح کلید سؤال ۶۷ مقیاس F طبق الگوی نمره‌گذاری دستی تایید شده
+            { id: 67, scale: "F", isReverse: false, text: "گاهی احساس میکنم افکارم آن قدر عجیب اند که نمیتوانم آنها را برای کسی توضیح دهم." },
+            { id: 68, scale: "K", isReverse: false, text: "من آدمی هستم که دیگران میتوانند روی او حساب کنند." },
+            { id: 69, scale: "Hs", isReverse: false, text: "من زیاد در اینترنت درباره بیماریها و علائمشان جستجو میکنم" },
+            { id: 70, scale: "D", isReverse: false, text: "تصمیم گیری حتی درباره چیزهای ساده برایم سخت شده است." },
+            { id: 71, scale: "Hy", isReverse: false, text: "گاهی بدون دلیل مشخص قلبم تند میزند یا احساس تنگی نفس میکنم." },
+            { id: 72, scale: "Pa", isReverse: false, text: "وقتی کسی بیش از حد صمیمی میشود اول شک میکنم که نیت پنهانی دارد." },
+            { id: 73, scale: "Sc", isReverse: false, text: "گاهی افکاری به ذهنم میرسد که انگار مال من نیستند." },
+            { id: 74, scale: "Ma", isReverse: false, text: "وقتی حالم خوب است کارهایی میکنم که بعداً پشیمان میشوم مثل خرج کردن زیاد یا قول های غیر واقعی)." },
+            { id: 75, scale: "Pd", isReverse: false, text: "به اکثر آدم ها اعتماد نمیکنم چون فکر میکنم فقط به فکر خودشان هستند." },
+            { id: 76, scale: "Si", isReverse: false, text: "وقتی میتوانم از رویدادهای اجتماعی کنار بکشم این کار را میکنم" },
+            { id: 77, scale: "PK", isReverse: false, text: "بعد از آن اتفاق، احساس میکنم دیگر نمیتوانم مثل قبل به کسی اعتماد کنم." },
+            { id: 78, scale: "A", isReverse: false, text: "مسئولیتهایم نسبت به دوستان و اطرافیانم گاهی سنگین میشود." },
+            { id: 79, scale: "L", isReverse: true, text: "گاهی وقتی اشتباه میکنم سعی میکنم تقصیر را به گردن دیگری بیندازم" },
+            { id: 80, scale: "F", isReverse: false, text: "گاهی احساس میکنم روحم از بدنم جدا شده است." },
+            { id: 81, scale: "K", isReverse: false, text: "من با اکثر افرادی که میشناسم رابطه خوبی دارم" },
+            { id: 82, scale: "Hs", isReverse: false, text: "گاهی از ورزش یا فعالیت بدنی اجتناب میکنم چون نگرانم به بدنم آسیب بزند." },
+            { id: 83, scale: "D", isReverse: false, text: "صبح ها از خواب بیدار شدن و شروع روز برایم خیلی سخت است." },
+            { id: 84, scale: "Hy", isReverse: false, text: "وقتی ناراحت یا تحت فشارم بدنم واکنش نشان میدهد؛ مثلاً سردرد میگیرم یا دلم درد می کند." },
+            { id: 85, scale: "Pa", isReverse: false, text: "وقتی کسی از من انتقاد میکند مدتها به آن فکر میکنم و ناراحت میمانم." },
+            { id: 86, scale: "Sc", isReverse: false, text: "گاهی احساس میکنم از بیرون به خودم نگاه میکنم" },
+            { id: 87, scale: "Ma", isReverse: false, text: "گاهی بدون فکر کردن وارد موقعیتهای خطرناک یا هیجانی میشوم چون احساس شکست ناپذیری دارم" },
+            { id: 88, scale: "Pd", isReverse: false, text: "گاهی برای رسیدن به خواسته ام حقیقت را کمی تغییر میدهم" },
+            { id: 89, scale: "Si", isReverse: false, text: "گاهی احساس میکنم حتی در کنار آدمهای آشنا هم تنها هستم." },
+            { id: 90, scale: "PK", isReverse: false, text: "گاهی خودم را به خاطر آنچه اتفاق افتاده سرزنش میکنم" },
+            { id: 91, scale: "A", isReverse: false, text: "اغلب احساس میکنم خسته ام حتی وقتی کار زیادی نکرده ام" },
+            { id: 92, scale: "L", isReverse: true, text: "گاهی وقتی کار خسته کننده ای دارم آن را به تعویق می اندازم" },
+            // اصلاح کلید سؤال ۹۳ مقیاس F طبق الگوی نمره‌گذاری دستی تایید شده
+            { id: 93, scale: "F", isReverse: false, text: "گاهی چیزهایی برایم اتفاق میافتد که هیچ کس دیگری آنها را تجربه نمی کند." },
+            { id: 94, scale: "K", isReverse: false, text: "حتی وقتی از دست اعضای خانواده ام ناراحتم سعی میکنم چیزی به روی خودم نیاورم" },
+            { id: 95, scale: "Hs", isReverse: false, text: "نگرانی درباره سلامتم باعث شده کمتر از قبل از زندگی لذت ببرم" },
+            { id: 96, scale: "D", isReverse: false, text: "انرژی ام آن قدر کم است که حتی کارهای ساده روزمره سنگین به نظر میرسند." },
+            { id: 97, scale: "Hy", isReverse: false, text: "حتمی وقتی همه چیز خوب پیش نمیرود باز هم احساس میکنم اوضاع من بهتر از بیشتر آدم هاست." },
+            { id: 98, scale: "Pa", isReverse: false, text: "احساس میکنم در مقایسه با دیگران با من منصفانه رفتار نمی شود." },
+            { id: 99, scale: "Sc", isReverse: false, text: "گاهی صداها یا تصاویری تجربه میکنم که مطمئن نیستم واقعی هستند یا نه." },
+            { id: 100, scale: "Ma", isReverse: false, text: "وقتی کسی جلوی کاری را که میخواهم بگیرد خیلی سریع عصبانی میشوم" },
+            { id: 101, scale: "Pd", isReverse: false, text: "وقتی کسی آسیب میبیند معمولاً فکر میکنم خودش مقصر بوده." },
+            { id: 102, scale: "Si", isReverse: false, text: "احساس میکنم با اکثر همسالانم خیلی فرق دارم" },
+            { id: 103, scale: "PK", isReverse: false, text: "بعد از آن اتفاق، احساس میکنم نسبت به چیزهایی که قبلاً دوست داشتم بی تفاوت شده ام." },
+            { id: 104, scale: "A", isReverse: false, text: "وقتی مشکلات روی هم انباشته میشوند احساس میکنم دارم از پا در می آیم" },
+            // اصلاح کلید سؤال ۱۰۵ مقیاس L (تغییر از معکوس به مستقیم بر اساس فایل پی‌دی‌اف)
+            { id: 105, scale: "L", isReverse: false, text: "گاهی در مکالمه چیزی میگویم که کاملاً درست نیست تا موقعیت را راحت تر کنم" },
+            { id: 106, scale: "F", isReverse: false, text: "گاهی بوهایی احساس میکنم که دیگران نمی فهمند از کجاست." },
+            { id: 107, scale: "K", isReverse: false, text: "ترجیح میدهم دیگران از مشکلات خصوصی ام چیزی ندانند." },
+            { id: 108, scale: "Hs", isReverse: false, text: "وقتی پزشک میگوید مشکلی ندارم فقط برای مدت کوتاهی آرام میشوم" },
+            { id: 109, scale: "D", isReverse: false, text: "وقتی به آینده فکر میکنم بیشتر چیزهای بد میبینم تا خوب" },
+            { id: 110, scale: "Hy", isReverse: false, text: "وقتی حالم خوب نیست دلم میخواهد دیگران بیشتر هوای مرا داشته باشند و به من برسند." },
+            { id: 111, scale: "Pa", isReverse: false, text: "وقتی معلم یا بزرگتری نمره یا نظر بدی به من میدهد فکر میکنم شخصی است نه عادلانه" },
+            { id: 112, scale: "Sc", isReverse: false, text: "بعضی وقتها چیزهایی میبینم یا حس میکنم که دیگران نمیبینند." },
+            { id: 113, scale: "Ma", isReverse: false, text: "قوانین و محدودیتها بیشتر برای افرادی است که توانایی من را ندارند." },
+            { id: 114, scale: "Pd", isReverse: false, text: "گاهی بدون دلیل مشخص احساس خشم یا بیقراری شدید میکنم" },
+            { id: 115, scale: "Si", isReverse: false, text: "نگران این هستم که دیگران درباره ام چه فکری می کنند." },
+            { id: 116, scale: "PK", isReverse: false, text: "من اغلب در حالت آماده باش هستم انگار که خطری در کمین است." },
+            { id: 117, scale: "A", isReverse: false, text: "اغلب بدون دلیل مشخص احساس نگرانی یا دلشوره میکنم" },
+            // اصلاح کلید سؤال ۱۱۸ مقیاس L (تغییر از معکوس به مستقیم بر اساس فایل پی‌دی‌اف)
+            { id: 118, scale: "L", isReverse: false, text: "گاهی وقتی از کسی خوشم نمی آید سعی میکنم آن را پنهان کنم" },
+            { id: 119, scale: "F", isReverse: false, text: "احساس میکنم حشراتی زیر پوستم حرکت میکنند." },
+            { id: 120, scale: "K", isReverse: false, text: "ترجیح میدهم به مشکلاتم زیاد فکر نکنم تا اینکه ذهنم درگیر شود." },
+            { id: 121, scale: "Hs", isReverse: false, text: "فکر میکنم بدن من ضعیف تر از بقیه هم سن و سال هایم است." },
+            { id: 122, scale: "D", isReverse: false, text: "گاهی فکر میکنم اگر نبودم فرقی برای کسی نداشت." },
+            { id: 123, scale: "Hy", isReverse: false, text: "گاهی وقتی ناراحتم اشتهایم را از دست میدهم یا برعکس بیش از حد میخورم." },
+            { id: 124, scale: "Pa", isReverse: true, text: "معمولاً به دیگران اعتماد دارم و فکر نمیکنم کسی بخواهد به من آسیب بزند." },
+            { id: 125, scale: "Sc", isReverse: true, text: "افکارم معمولاً واضح اند و به راحتی میتوانم تمرکز کنم و آنچه را در ذهنم میگذرد دنبال کنم." },
+            { id: 126, scale: "Ma", isReverse: true, text: "حال و انرژی ام معمولاً در طول روز یکنواخت است و کمتر پیش می آید ناگهان خیلی پرشور یا بی حال شوم" },
+            { id: 127, scale: "Pd", isReverse: true, text: "حتی وقتی مطمئنم کسی متوجه نمیشود باز هم سعی میکنم کار درست را انجام دهم." },
+            { id: 128, scale: "Si", isReverse: true, text: "در مهمانیها اغلب ترجیح میدهم گوشه ای بنشینم تا اینکه با دیگران صحبت کنم." },
+            { id: 129, scale: "PK", isReverse: false, text: "از صداهای بلند یا ناگهانی خیلی بیشتر از بقیه میترسم یا جا میخورم" },
+            { id: 130, scale: "A", isReverse: true, text: "معمولاً میتوانم فشارهای زندگی ام را مدیریت کنم." }
+        ];
+
+        let userProfile = {};
+        let currentPage = 0;
+        const pageSize = 10;
+        let userResponses = {}; 
+        let currentChartInstance = null;
+
+        window.onload = function() {
+            renderDatabaseTable();
+        };
+
+        function showRegisterSection() {
+            document.getElementById('step-report').classList.add('hidden');
+            document.getElementById('step-test').classList.add('hidden');
+            document.getElementById('step-register').classList.remove('hidden');
+            document.getElementById('user-badge').classList.add('hidden');
+            document.getElementById('reg-form').reset();
+            userResponses = {};
+            currentPage = 0;
+        }
+
+        function triggerAdminAccess() {
+            const password = prompt("جهت دسترسی به بانک اطلاعات مراجعین، رمز عبور مدیریت را وارد کنید:");
+            if (password === "admin123") {
+                const dbSec = document.getElementById('step-database');
+                dbSec.classList.remove('hidden');
+                renderDatabaseTable();
+                dbSec.scrollIntoView({ behavior: 'smooth' });
+            } else if (password !== null) {
+                alert("رمز عبور اشتباه است! دسترسی غیر مجاز.");
+            }
+        }
+
+        function closeDatabase() {
+            document.getElementById('step-database').classList.add('hidden');
+        }
+
+        function startTest(e) {
+            e.preventDefault();
+            userProfile = {
+                name: document.getElementById('user-name').value,
+                age: document.getElementById('user-age').value,
+                class: document.getElementById('user-class').value,
+                gender: document.querySelector('input[name="gender"]:checked').value,
+                date: new Date().toLocaleDateString('fa-IR')
+            };
+
+            document.getElementById('user-badge').innerText = `مراجع: ${userProfile.name}`;
+            document.getElementById('user-badge').classList.remove('hidden');
+            document.getElementById('step-register').classList.add('hidden');
+            document.getElementById('step-database').classList.add('hidden');
+            document.getElementById('step-test').classList.remove('hidden');
+
+            renderPage();
+        }
+
+        function renderPage() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+
+            const startIdx = currentPage * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, questions.length);
+            const pageQuestions = questions.slice(startIdx, endIdx);
+
+            pageQuestions.forEach(q => {
+                const ans = userResponses[q.id];
+                
+                const yesStyle = ans === 'yes' 
+                    ? 'bg-green-100 border-green-500 text-green-800 font-bold shadow-sm' 
+                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100';
+                    
+                const noStyle = ans === 'no' 
+                    ? 'bg-red-100 border-red-500 text-red-800 font-bold shadow-sm' 
+                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100';
+
+                const itemHtml = `
+                    <div class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100">
+                        <div class="flex items-start gap-3 md:w-3/4">
+                            <span class="bg-gray-100 text-gray-700 font-bold px-2.5 py-1 text-sm rounded-lg">${q.id}</span>
+                            <p class="text-gray-800 text-base pt-0.5 leading-relaxed">${q.text}</p>
+                        </div>
+                        <div class="flex items-center gap-3 mr-8 md:mr-0">
+                            <label id="lbl-yes-${q.id}" class="flex items-center justify-center border-2 rounded-xl px-5 py-2 cursor-pointer transition-all min-w-[75px] text-center ${yesStyle}">
+                                <input type="radio" name="q-${q.id}" value="yes" ${ans === 'yes' ? 'checked' : ''} 
+                                    onchange="handleSelection(${q.id}, 'yes')" class="hidden">
+                                <span>بله</span>
+                            </label>
+                            <label id="lbl-no-${q.id}" class="flex items-center justify-center border-2 rounded-xl px-5 py-2 cursor-pointer transition-all min-w-[75px] text-center ${noStyle}">
+                                <input type="radio" name="q-${q.id}" value="no" ${ans === 'no' ? 'checked' : ''} 
+                                    onchange="handleSelection(${q.id}, 'no')" class="hidden">
+                                <span>خیر</span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', itemHtml);
+            });
+
+            document.getElementById('page-indicator').innerText = `صفحه ${currentPage + 1} از ${Math.ceil(questions.length / pageSize)}`;
+            document.getElementById('progress-bar').style.width = `${((currentPage + 1) / Math.ceil(questions.length / pageSize)) * 100}%`;
+            document.getElementById('btn-prev').style.visibility = currentPage === 0 ? 'hidden' : 'visible';
+            
+            if ((currentPage + 1) * pageSize >= questions.length) {
+                document.getElementById('btn-next').classList.add('hidden');
+                document.getElementById('btn-submit').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-next').classList.remove('hidden');
+                document.getElementById('btn-submit').classList.add('hidden');
+            }
+            window.scrollTo(0, 0);
+        }
+
+        function handleSelection(id, val) {
+            userResponses[id] = val;
+            const btnYes = document.getElementById(`lbl-yes-${id}`);
+            const btnNo = document.getElementById(`lbl-no-${id}`);
+
+            if (val === 'yes') {
+                btnYes.className = "flex items-center justify-center border-2 rounded-xl px-5 py-2 cursor-pointer transition-all min-w-[75px] text-center bg-green-100 border-green-500 text-green-800 font-bold shadow-sm";
+                btnNo.className = "flex items-center justify-center border-2 rounded-xl px-5 py-2 cursor-pointer transition-all min-w-[75px] text-center bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100";
+            } else {
+                btnYes.className = "flex items-center justify-center border-2 rounded-xl px-5 py-2 cursor-pointer transition-all min-w-[75px] text-center bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100";
+                btnNo.className = "flex items-center justify-center border-2 rounded-xl px-5 py-2 cursor-pointer transition-all min-w-[75px] text-center bg-red-100 border-red-500 text-red-800 font-bold shadow-sm";
+            }
+        }
+
+        function isPageValid() {
+            const startIdx = currentPage * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, questions.length);
+            for (let i = startIdx; i < endIdx; i++) {
+                if (!userResponses[questions[i].id]) return false;
+            }
+            return true;
+        }
+
+        function nextPage() {
+            if (!isPageValid()) {
+                alert('لطفاً پیش از رفتن به صفحه بعد، به تمامی سؤالات این صفحه پاسخ دهید.');
+                return;
+            }
+            currentPage++;
+            renderPage();
+        }
+
+        function prevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                renderPage();
+            }
+        }
+
+        function finishTest() {
+            if (!isPageValid()) {
+                alert('لطفاً به تمام سؤالات صفحه پایانی پاسخ دهید.');
+                return;
+            }
+            document.getElementById('step-test').classList.add('hidden');
+            document.getElementById('step-report').classList.remove('hidden');
+            calculateScores();
+        }
+
+        function calculateScores() {
+            const rawScores = {};
+            scaleOrder.forEach(s => rawScores[s] = 0);
+
+            questions.forEach(q => {
+                const ans = userResponses[q.id];
+                const isYes = ans === 'yes';
+                let score = q.isReverse ? (isYes ? 0 : 1) : (isYes ? 1 : 0);
+                rawScores[q.scale] += score;
+            });
+
+            const activeNorms = normTable[userProfile.gender];
+            const tScores = {};
+
+            scaleOrder.forEach(s => {
+                const raw = rawScores[s];
+                const mean = activeNorms[s].mean;
+                const sd = activeNorms[s].sd;
+                const zScore = (raw - mean) / sd;
+                tScores[s] = Math.round((50 + (10 * zScore)) * 100) / 100;
+            });
+
+            saveToDatabase(userProfile, tScores, rawScores);
+            displayReport(userProfile, tScores, rawScores);
+        }
+
+        function displayReport(profile, tScores, rawScores) {
+            document.getElementById('print-name').innerText = profile.name;
+            document.getElementById('print-gender').innerText = profile.gender === 'girl' ? 'دختر' : 'پسر';
+            document.getElementById('print-age').innerText = profile.age;
+            document.getElementById('print-class').innerText = profile.class;
+
+            generateChart(tScores);
+            generateNumericalTable(tScores, rawScores);
+            generateInterpretation(tScores);
+        }
+
+        function generateChart(tScores) {
+            const ctx = document.getElementById('profileChart').getContext('2d');
+            if (currentChartInstance) { currentChartInstance.destroy(); }
+
+            const horizontalLinesPlugin = {
+                id: 'horizontalLines',
+                afterDraw: (chart) => {
+                    const { ctx, scales: { x, y }, chartArea: { left, right, top, bottom } } = chart;
+                    ctx.save();
+                    
+                    // ۱. رسم خط میانگین جامعه T = 50 به صورت کم رنگ و نقطه‌چین
+                    const y50 = y.getPixelForValue(50);
+                    ctx.strokeStyle = 'rgba(100, 116, 139, 0.45)';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath(); ctx.moveTo(left, y50); ctx.lineTo(right, y50); ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = 'rgba(100, 116, 139, 0.8)';
+                    ctx.font = '10px Vazirmatn';
+                    ctx.fillText('خط پایه / میانگین جامعه (T = 50)', left + 10, y50 - 4);
+
+                    // ۲. خط برش بالینی T=65
+                    const y65 = y.getPixelForValue(65);
+                    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.moveTo(left, y65); ctx.lineTo(right, y65); ctx.stroke();
+                    ctx.fillStyle = '#475569'; ctx.font = 'bold 10px Vazirmatn';
+                    ctx.fillText('خط مرز بالینی (T = 65)', right - 110, y65 - 4);
+
+                    // ۳. خط مرز اختلال شدید T=70
+                    const y70 = y.getPixelForValue(70);
+                    ctx.strokeStyle = '#fee2e2'; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.moveTo(left, y70); ctx.lineTo(right, y70); ctx.stroke();
+                    ctx.fillStyle = '#b91c1c';
+                    ctx.fillText('مرز اختلال شدید (T = 70)', left + 10, y70 - 4);
+
+                    // ۴. رسم خط عمودی جداکننده بین مقیاس K و Hs
+                    const xK = x.getPixelForValue('K');
+                    const xHs = x.getPixelForValue('Hs');
+                    const xDivider = (xK + xHs) / 2;
+
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(xDivider, top); ctx.lineTo(xDivider, bottom); ctx.stroke();
+
+                    // ۵. نگارش زیرنویس متمایز کننده بخش‌ها در بالای نمودار
+                    ctx.font = 'bold 11px Vazirmatn';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#475569';
+                    ctx.fillText('📊 مقیاس‌های روایی', (left + xDivider) / 2, top - 8);
+                    ctx.fillStyle = '#2563eb';
+                    ctx.fillText('🩺 مقیاس‌های بالینی و تکمیلی', (xDivider + right) / 2, top - 8);
+
+                    ctx.restore();
+                }
+            };
+
+            currentChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: scaleOrder,
+                    datasets: [
+                        {
+                            label: 'مقیاس‌های روایی',
+                            data: scaleOrder.map(s => ["L", "F", "K"].includes(s) ? tScores[s] : null),
+                            borderColor: '#475569',
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#334155',
+                            pointRadius: 4,
+                            tension: 0,
+                            spanGaps: false
+                        },
+                        {
+                            label: 'مقیاس‌های بالینی',
+                            data: scaleOrder.map(s => !["L", "F", "K"].includes(s) ? tScores[s] : null),
+                            borderColor: '#2563eb',
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#1d4ed8',
+                            pointRadius: 4,
+                            tension: 0,
+                            spanGaps: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    layout: { padding: { left: 10, right: 10, top: 25, bottom: 5 } },
+                    scales: {
+                        x: { ticks: { font: { family: 'Vazirmatn', size: 12, weight: 'bold' } } },
+                        y: { min: 20, max: 90, ticks: { stepSize: 10, font: { size: 10 } } }
+                    }
+                },
+                plugins: [horizontalLinesPlugin]
+            });
+        }
+
+        function generateNumericalTable(tScores, rawScores) {
+            const container = document.getElementById('table-container');
+            const activeNorms = normTable[userProfile.gender];
+            const safeRaw = rawScores || {};
+
+            let tableHtml = `
+                <table class="w-full text-center border-collapse text-xs mt-3 border border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-700 border-b border-gray-200">
+                            <th class="p-2 border-l border-gray-200 text-right font-bold bg-gray-50 min-w-[90px]">شاخص / مقیاس</th>
+                            ${scaleOrder.map(s => `<th class="p-1 border-l border-gray-200 font-bold bg-slate-50">${s}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr class="bg-white text-gray-800">
+                            <td class="p-1.5 border-l border-gray-200 font-bold text-right bg-gray-50 text-[11px]">نمره خام</td>
+                            ${scaleOrder.map(s => `<td class="p-1 border-l border-gray-200">${safeRaw[s] !== undefined ? safeRaw[s] : '-'}</td>`).join('')}
+                        </tr>
+                        <tr class="bg-white text-gray-500">
+                            <td class="p-1.5 border-l border-gray-200 font-bold text-right bg-gray-50 text-[11px]">میانگین هنجار</td>
+                            ${scaleOrder.map(s => `<td class="p-1 border-l border-gray-200 text-gray-400">${activeNorms[s].mean.toFixed(2)}</td>`).join('')}
+                        </tr>
+                        <tr class="bg-blue-50 text-blue-900 font-bold">
+                            <td class="p-1.5 border-l border-gray-200 font-bold text-right bg-blue-100 text-[11px]">نمره تراز T</td>
+                            ${scaleOrder.map(s => `<td class="p-1 border-l border-gray-200 text-blue-700 font-bold">${Math.round(tScores[s])}</td>`).join('')}
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = tableHtml;
+        }
+
+        function generateInterpretation(tScores) {
+            const validityContainer = document.getElementById('validity-interpretation');
+            const clinicalContainer = document.getElementById('clinical-interpretation');
+            
+            validityContainer.innerHTML = '';
+            clinicalContainer.innerHTML = '';
+
+            let elevatedClinicalCount = 0;
+
+            scaleOrder.forEach(s => {
+                const tScore = tScores[s];
+                const meta = scaleMeta[s];
+
+                if (meta.type === 'validity') {
+                    const statusText = tScore > 60 ? `🔴 شاخص پدیدار بالا: ${meta.high}` : `🟢 شاخص در محدوده نرمال گروه هنجار نوجوانان قرار دارد.`;
+                    const blockHtml = `
+                        <div class="p-3 bg-gray-50 border-r-4 border-slate-500 rounded-xl mb-2">
+                            <h5 class="font-bold text-gray-900">${meta.name} — (نمره T: ${tScore})</h5>
+                            <p class="text-xs text-gray-600"><span class="font-medium">هدف ارزیابی شاخص:</span> ${meta.desc}</p>
+                            <p class="text-xs text-gray-800 mt-1 font-medium bg-white p-2 rounded-lg border border-gray-100">${statusText}</p>
+                        </div>
+                    `;
+                    validityContainer.insertAdjacentHTML('beforeend', blockHtml);
+                } else if (meta.type === 'clinical' && tScore >= 65) {
+                    elevatedClinicalCount++;
+                    let colorSeverity = tScore >= 70 ? 'border-red-600 bg-red-50 text-red-900' : 'border-amber-500 bg-amber-50 text-amber-900';
+                    let alertBadge = tScore >= 70 ? '⚠️ وضعیت اختلال شدید' : '🔍 وضعیت بالینی محتاط';
+
+                    const blockHtml = `
+                        <div class="p-3 border-r-4 ${colorSeverity} rounded-xl mb-2">
+                            <h5 class="font-bold flex justify-between">${meta.name} — (نمره T: ${tScore}) <span>${alertBadge}</span></h5>
+                            <p class="text-xs opacity-80"><span class="font-medium">تعریف مقیاس:</span> ${meta.desc}</p>
+                            <p class="text-xs mt-1 font-medium bg-white p-2 rounded-lg border opacity-95 text-gray-900"><strong>تفسیر بالینی:</strong> ${meta.high}</p>
+                        </div>
+                    `;
+                    clinicalContainer.insertAdjacentHTML('beforeend', blockHtml);
+                }
+            });
+
+            if (elevatedClinicalCount === 0) {
+                clinicalContainer.innerHTML = `<p class="p-4 bg-green-50 text-green-800 rounded-xl font-medium text-sm">شواهد بالینی حاکی از نرمال بودن کل پروفایل مراجع است. نمرات مراجع در تمامی مقیاس‌های بالینی و تکمیلی پایین‌تر از خط برش T=65 ثبت گردیده است.</p>`;
+            }
+        }
+
+        function saveToDatabase(profile, tScores, rawScores) {
+            let db = JSON.parse(localStorage.getItem('psych_teen_db')) || [];
+            const newRecord = {
+                id: Date.now(),
+                profile: profile,
+                tScores: tScores,
+                rawScores: rawScores,
+                timestamp: new Date().toLocaleDateString('fa-IR') + ' - ' + new Date().toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'})
+            };
+            db.push(newRecord);
+            localStorage.setItem('psych_teen_db', JSON.stringify(db));
+            renderDatabaseTable();
+        }
+
+        function renderDatabaseTable() {
+            const dbRows = document.getElementById('database-rows');
+            let db = JSON.parse(localStorage.getItem('psych_teen_db')) || [];
+            dbRows.innerHTML = '';
+
+            if (db.length === 0) {
+                dbRows.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-400">هیچ پرونده‌ای تاکنون در پایگاه داده ذخیره نشده است.</td></tr>`;
+                return;
+            }
+
+            db.reverse().forEach(record => {
+                const p = record.profile;
+                const rowHtml = `
+                    <tr class="hover:bg-gray-50 text-gray-600">
+                        <td class="p-3 font-bold text-gray-900">${p.name}</td>
+                        <td class="p-3">${p.gender === 'girl' ? 'دختر' : 'پسر'}</td>
+                        <td class="p-3">سن ${p.age} / پایه ${p.class}</td>
+                        <td class="p-3 text-xs">${record.timestamp}</td>
+                        <td class="p-3 text-center flex justify-center gap-2">
+                            <button onclick="loadRecordFromDb(${record.id})" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1 rounded-lg font-medium text-xs transition">👁️ مشاهده کارنامه</button>
+                            <button onclick="deleteRecordFromDb(${record.id})" class="bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded-lg text-xs transition">حذف</button>
+                        </td>
+                    </tr>
+                `;
+                dbRows.insertAdjacentHTML('beforeend', rowHtml);
+            });
+        }
+
+        function loadRecordFromDb(id) {
+            let db = JSON.parse(localStorage.getItem('psych_teen_db')) || [];
+            const record = db.find(item => item.id === id);
+            if (record) {
+                userProfile = record.profile;
+                document.getElementById('step-register').classList.add('hidden');
+                document.getElementById('step-test').classList.add('hidden');
+                document.getElementById('step-database').classList.add('hidden');
+                document.getElementById('step-report').classList.remove('hidden');
+                
+                displayReport(record.profile, record.tScores, record.rawScores || null);
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function deleteRecordFromDb(id) {
+            if (confirm('آیا از حذف دائم این پرونده از پایگاه داده اطمینان دارید؟')) {
+                let db = JSON.parse(localStorage.getItem('psych_teen_db')) || [];
+                db = db.filter(item => item.id !== id);
+                localStorage.setItem('psych_teen_db', JSON.stringify(db));
+                renderDatabaseTable();
+            }
+        }
+    </script>
+</body>
+</html>
