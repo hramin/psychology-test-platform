@@ -27,6 +27,21 @@ services:
       pgbouncer:
         condition: service_started
 
+  # Standalone, stateless Scoring Engine (own image; bundles instrument plugins).
+  # Reachable only on the internal compose network — NO host `ports` mapping, so
+  # Nginx never proxies to it. The app will call it via EngineClient in Phase 5.
+  engine:
+    build:
+      context: ./engine
+      dockerfile: Dockerfile
+    expose: ["9000"]
+    command: ["gunicorn", "engine.app:app", "-k", "uvicorn.workers.UvicornWorker", "-w", "2", "-b", "0.0.0.0:9000"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:9000/healthz').status==200 else 1)\""]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   nginx:
     image: nginx:1.27-alpine
     volumes:

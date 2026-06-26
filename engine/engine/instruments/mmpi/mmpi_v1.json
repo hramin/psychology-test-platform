@@ -1,0 +1,2416 @@
+{
+  "slug": "mmpi-teen-13",
+  "title": "نرم‌افزار ارزیابی روان‌شناختی نوجوانان (۱۳ مقیاسی)",
+  "version": 1,
+  "answer_format": {
+    "type": "binary",
+    "options": [
+      {
+        "value": "yes",
+        "label": "بله"
+      },
+      {
+        "value": "no",
+        "label": "خیر"
+      }
+    ]
+  },
+  "pagination": {
+    "page_size": 10
+  },
+  "demographics": [
+    {
+      "key": "gender",
+      "label": "جنسیت",
+      "type": "choice",
+      "required": true,
+      "options": [
+        {
+          "value": "girl",
+          "label": "دختر"
+        },
+        {
+          "value": "boy",
+          "label": "پسر"
+        }
+      ],
+      "drives_norm_group": true
+    },
+    {
+      "key": "age",
+      "label": "سن",
+      "type": "int",
+      "required": true,
+      "min": 10,
+      "max": 20
+    },
+    {
+      "key": "class",
+      "label": "پایه تحصیلی",
+      "type": "text",
+      "required": true
+    }
+  ],
+  "norm_groups": {
+    "by": "gender",
+    "values": [
+      "girl",
+      "boy"
+    ]
+  },
+  "scale_order": [
+    "L",
+    "F",
+    "K",
+    "Hs",
+    "D",
+    "Hy",
+    "Pa",
+    "Sc",
+    "Ma",
+    "Pd",
+    "Si",
+    "PK",
+    "A"
+  ],
+  "scales": [
+    {
+      "key": "L",
+      "name": "dروغ‌سنجی (L)",
+      "type": "validity",
+      "desc": "تمایل فرد به نشان‌دادن خود به‌شکل آرمانی و اخلاقی، و انکار ضعف‌های رایج انسانی را می‌سنجد.",
+      "high": "بالا بودن نمره در این مقیاس نشان‌دهنده تدافع شدید، گرایش مراجع به ارائه تصویری بی‌نقص و اغراق‌آمیز از رفتارهای پسندیده اجتماعی و کتمان نقایص جزیی خود است. این وضعیت می‌تواند ناشی از هنجارطلبی مفرط یا تلاش عمدی برای خوب جلوه دادن خود باشد؛ لذا بررسی دقیق اعتبار سایر مقیاس‌ها و انجام مصاحبه تکمیلی پیشنهاد می‌شود.",
+      "interpretation": {
+        "elevated_if_t_gt": 60
+      }
+    },
+    {
+      "key": "F",
+      "name": "نابسامدی (F)",
+      "type": "validity",
+      "desc": "میزان پاسخ‌های غیرمعمول و نادر را نشان می‌دهد؛ شاخصی از آشفتگی روانی، پاسخ‌دهی تصامفی یا بزرگ‌نمایی مشکلات.",
+      "high": "احتمال وجود آشفتگی روان‌شناختی شدید، تمایل به بزرگ‌نمایی مشکلات جهت جلب توجه بالینی یا ناتوانی در تمرکز بر سوالات. تفسیر نیمرخ باید با احتیاط صورت گیرد.",
+      "interpretation": {
+        "elevated_if_t_gt": 60
+      }
+    },
+    {
+      "key": "K",
+      "name": "تدافع (K)",
+      "type": "validity",
+      "desc": "گرایش به پنهان‌کردن مشکلات روانی و حفظ تصویر کنترل‌شده از خود را اندازه می‌گیرد.",
+      "high": "تدافع شدید در برابر آشکارسازی تعارضات درونی. مراجع تلاش دارد تصویر فردی کاملاً سازگار و مسلط بر امور را به نمایش بگذارد.",
+      "interpretation": {
+        "elevated_if_t_gt": 60
+      }
+    },
+    {
+      "key": "Hs",
+      "name": "خودبیمارانگاری (Hs)",
+      "type": "clinical",
+      "desc": "اشتغال ذهنی مفرط با سلامت جسمانی و شکایات بدنی متعدد.",
+      "high": "برجسته‌بودن تمرکز مراجع روی علائم مبهم بدنی و خستگی؛ احتمال استفاده از شکایات جسمی برای فرار از تعارضات روانی یا تحصیلی.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    },
+    {
+      "key": "D",
+      "name": "افسردگی (D)",
+      "type": "clinical",
+      "desc": "خلق پایین، ناامیدی، نارضایتی و کاهش سطح کلی انرژی مراجع.",
+      "high": "وجود نشانه‌های بارز خلق غمگین، احساس بدبینی نسبت به آینده و افت انگیزه در فعالیت‌های روزمره نوجوان.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    },
+    {
+      "key": "Hy",
+      "name": "هیستری (Hy)",
+      "type": "clinical",
+      "desc": "گرایش به بروز تنش روانی در قالب نشانه‌های جسمانی ناگهانی و نیاز مفرط به پذیرفته‌شدن.",
+      "high": "تمایل به حل تعارضات بین‌فردی از طریق شبیه‌سازی بیماری جسمی؛ وابستگی هیجانی بالا به تایید دیگران.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    },
+    {
+      "key": "Pa",
+      "name": "پارانویا (Pa)",
+      "type": "clinical",
+      "desc": "حساسیت بین‌فردی، بدگمانی، زودرنجی و احساس مورد بی‌عدالتی قرارگرفتن.",
+      "high": "حساسیت بیش از حد به انتقاد، بدگمانی نسبی به نیت اطرافیان و معلمان؛ احتمال جبهه‌گیری در تعاملات اجتماعی.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    },
+    {
+      "key": "Sc",
+      "name": "اسکیزوفرنیا (Sc)",
+      "type": "clinical",
+      "desc": "احساس بیگانگی عمیق، تفکر غیرمعمول، گوشه‌گیری و آشفتگی ادراکی.",
+      "high": "احساس تنهایی شدید، افکار ناسازگار یا تجارب ادراکی غیرمعمول؛ نیاز به بررسی جامع و ارزیابی تخصصی ساختار تفکر.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    },
+    {
+      "key": "Ma",
+      "name": "هیپومانیا (Ma)",
+      "type": "clinical",
+      "desc": "سطح بالای انرژی، تحریک‌پذیری، پرتحرکی و رفتارهای تکانشی.",
+      "high": "پرانرژی بودن مفرط، بیقراری، تکانشگری در تصمیم‌گیری و کم‌تحملی؛ گرایش بالایی به رفتارهای پرخطر هیجانی.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    },
+    {
+      "key": "Pd",
+      "name": "انحراف روانی (Pd)",
+      "type": "clinical",
+      "desc": "مشکل با مرجعیت و قانون، تعارض شدید خانوادگی و رفتارهای ناسازگارانه اجتماعی.",
+      "high": "وجود تعارضات آشکار با والدین، مراجع قدرت مدرسه یا جامعه؛ کم‌تحملی شدید در برابر قوانین و ساختارهای نظارتی.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    },
+    {
+      "key": "Si",
+      "name": "درون‌گرایی اجتماعی (Si)",
+      "type": "clinical",
+      "desc": "منعکس‌کننده کم‌رویی، تمایل زیاد به انزوا و محدود بودن ارتباطات همسالان.",
+      "high": "کم‌رویی بارز، تمایل زیاد به انزوا، محدود بودن ارتباطات همسالان و ترجیح تنهایی به حضور در محیط‌های گروهی.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    },
+    {
+      "key": "PK",
+      "name": "اختلال استرس پس از سانحه (PK)",
+      "type": "clinical",
+      "desc": "نشانه‌های مرتبط با تجربه آسیب روانی، اضطراب هجوم‌آور و بیش‌برانگیختگی.",
+      "high": "وجود اضطراب حاد ناشی از یادآوری تجارب یا حوادث ناگوار گذشته؛ بیش‌برانگیختگی و گارد دفاعی بالا.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    },
+    {
+      "key": "A",
+      "name": "اضطراب (A)",
+      "type": "clinical",
+      "desc": "سطح کلی ناراحتی روان‌شناختی، تنش و آشفتگی هیجانی فرد.",
+      "high": "سطح بالایی از تنش درونی، دلشوره مداوم، بی‌ثباتی هیجانی و دغدغه‌های ذهنی اضطراب‌آور در زمان حال.",
+      "interpretation": {
+        "caution_if_t_gte": 65,
+        "severe_if_t_gte": 70
+      }
+    }
+  ],
+  "norms": {
+    "girl": {
+      "L": {
+        "mean": 5.944,
+        "sd": 1.78
+      },
+      "F": {
+        "mean": 3.274,
+        "sd": 1.917
+      },
+      "K": {
+        "mean": 6.267,
+        "sd": 1.996
+      },
+      "Hs": {
+        "mean": 2.116,
+        "sd": 2.257
+      },
+      "D": {
+        "mean": 5.019,
+        "sd": 3.093
+      },
+      "Hy": {
+        "mean": 4.921,
+        "sd": 2.192
+      },
+      "Pa": {
+        "mean": 5.552,
+        "sd": 2.578
+      },
+      "Sc": {
+        "mean": 4.802,
+        "sd": 2.781
+      },
+      "Ma": {
+        "mean": 4.717,
+        "sd": 2.188
+      },
+      "Pd": {
+        "mean": 5.319,
+        "sd": 2.377
+      },
+      "Si": {
+        "mean": 5.612,
+        "sd": 2.341
+      },
+      "PK": {
+        "mean": 5.379,
+        "sd": 2.6
+      },
+      "A": {
+        "mean": 6.034,
+        "sd": 2.317
+      }
+    },
+    "boy": {
+      "L": {
+        "mean": 5.925,
+        "sd": 1.588
+      },
+      "F": {
+        "mean": 3.14,
+        "sd": 1.94
+      },
+      "K": {
+        "mean": 6.29,
+        "sd": 2.092
+      },
+      "Hs": {
+        "mean": 2.383,
+        "sd": 2.49
+      },
+      "D": {
+        "mean": 4.533,
+        "sd": 2.745
+      },
+      "Hy": {
+        "mean": 4.561,
+        "sd": 2.093
+      },
+      "Pa": {
+        "mean": 5.112,
+        "sd": 2.373
+      },
+      "Sc": {
+        "mean": 4.636,
+        "sd": 2.312
+      },
+      "Ma": {
+        "mean": 5.336,
+        "sd": 2.096
+      },
+      "Pd": {
+        "mean": 5.243,
+        "sd": 2.591
+      },
+      "Si": {
+        "mean": 5.246,
+        "sd": 2.237
+      },
+      "PK": {
+        "mean": 4.841,
+        "sd": 2.38
+      },
+      "A": {
+        "mean": 5.916,
+        "sd": 2.093
+      }
+    }
+  },
+  "tscore": {
+    "formula": "50 + 10*z",
+    "z": "(raw - mean) / sd",
+    "round_decimals": 2,
+    "rounding": "half_up_like_js_math_round"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "scale": "L",
+      "reverse": false,
+      "text": "هیچ وقت در زندگی ام به کسی دروغ نگفته ام",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "scale": "F",
+      "reverse": false,
+      "text": "گاهی احساس میکنم که دیگران میتوانند بدون حرف زدن بفهمند چه فکر میکنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "من اغلب نگران این هستم که بیماری جدی ای داشته باشم که هنوز تشخیص داده نشده.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "scale": "K",
+      "reverse": false,
+      "text": "من معمولاً میتوانم احساساتم را به خوبی مدیریت کنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "scale": "D",
+      "reverse": false,
+      "text": "بیشتر روزهای هفته احساس غمگینی میکنم که دلیل مشخصی ندارد.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "وقتی با کسی دعوا میکنم یا ناراحت میشوم بدنم دردهایی پیدا میکند که بعداً خودبه خود خوب می شوند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "scale": "Pa",
+      "reverse": false,
+      "text": "گاهی فکر میکنم وقتی وارد جایی میشوم بقیه درباره من حرف میزنند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "scale": "Sc",
+      "reverse": false,
+      "text": "احساس میکنم هیچ کس واقعاً مرا نمی فهمد حتی نزدیک ترین افراد.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "scale": "Ma",
+      "reverse": false,
+      "text": "انرژی من بیشتر از اکثر هم سن و سال هایم است.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "scale": "Pd",
+      "reverse": false,
+      "text": "گاهی کارهایی کرده ام که میدانستم درست نیست ولی برایم مهم نبود.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "scale": "Si",
+      "reverse": false,
+      "text": "جمع های بزرگ احساس ناراحتی میکنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "scale": "PK",
+      "reverse": false,
+      "text": "من اغلب کابوسهای تکرار شونده ای درباره یک اتفاق وحشتناک دارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "scale": "A",
+      "reverse": false,
+      "text": "حجم تکالیف و امتحانات آنقدر زیاد است که احساس میکنم وقت کافی ندارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "scale": "L",
+      "reverse": false,
+      "text": "حتی وقتی کسی مرا ناراحت میکند هیچ وقت از دست او عصبانی نمیشوم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "scale": "F",
+      "reverse": false,
+      "text": "گاهی صداهایی میشنوم که مطمئن نیستم واقعی هستند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "scale": "K",
+      "reverse": false,
+      "text": "وقتی اتفاق بدی میافتد خیلی زود به حالت عادی بر می گردم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "وقتی علامت جسمانی جدیدی در بدنم حس میکنم اولین فکرم این است که شاید بیماری خطرناکی باشد.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "scale": "D",
+      "reverse": false,
+      "text": "گاهی بدون دلیل خاصی گریه ام میگیرد یا بغض دارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "در موقعیت های پرتنش گاهی دستم یا پایم بی حس میشود یا نمیتوانم آن را درست حرکت دهم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "scale": "Pa",
+      "reverse": false,
+      "text": "احساس میکنم بعضی افراد عمداً کارهایی میکنند تا من ناراحت شوم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "scale": "Sc",
+      "reverse": false,
+      "text": "ترجیح میدهم تنها باشم چون بودن با دیگران خسته کننده و بی معناست.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "scale": "Ma",
+      "reverse": false,
+      "text": "گاهی آن قدر سریع حرف میزنم که دیگران می گویند نمی فهمند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "scale": "Pd",
+      "reverse": false,
+      "text": "وقتی مطمئنم گیر نمیافتم قوانین را زیر پا می گذارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "scale": "Si",
+      "reverse": false,
+      "text": "پیدا کردن دوستان جدید برایم دشوار است.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "scale": "PK",
+      "reverse": false,
+      "text": "گاهی ناگهان خاطرات تلخ گذشته بدون اینکه بخواهم به ذهنم هجوم می آورند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "scale": "A",
+      "reverse": false,
+      "text": "معمولاً ترجیح میدهم مشکلاتم را آن قدر کوچک جلوه بدهم که کسی نگرانم نشود.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "scale": "L",
+      "reverse": false,
+      "text": "در طول زندگی ام تقریباً هیچ اشتباهی نکرده ام که بعداً از آن پشیمان شوم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "scale": "F",
+      "reverse": false,
+      "text": "گاهی احساس میکنم افکارم آن قدر عجیب هستند که نمیتوانم آنها را برای کسی توضیح بدهم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "scale": "K",
+      "reverse": false,
+      "text": "کمتر پیش می آید که چیزی واقعاً حالم را خراب کند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "حتی وقتی آزمایشهایم طبیعی است باز هم نگرانم که چیزی از قلم افتاده باشد.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "scale": "D",
+      "reverse": false,
+      "text": "کارهایی که قبلاً برایم جالب بودند دیگر برایم اهمیتی ندارند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "وقتی خیلی نگران یا ترسیده ام گاهی صدایم در نمی آید یا نمیتوانم درست حرف بزنم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "scale": "Pa",
+      "reverse": false,
+      "text": "گاهی حس میکنم کسی حرکاتم را زیر نظر دارد.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "scale": "Sc",
+      "reverse": false,
+      "text": "گاهی احساس میکنم هیچ احساسی ندارم انگار از درون خالی هستم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "scale": "Ma",
+      "reverse": false,
+      "text": "دوره هایی دارم که خیلی کمتر از معمول نیاز به خواب دارم ولی باز هم پرانرژی هستم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "scale": "Pd",
+      "reverse": false,
+      "text": "در خانواده ام احساس میکنم کسی واقعاً مرا نمی فهمد.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "scale": "Si",
+      "reverse": false,
+      "text": "دوست ندارم مرکز توجه باشم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "scale": "PK",
+      "reverse": false,
+      "text": "گاهی احساس میکنم آن اتفاق بد دوباره دارد اتفاق میافتد انگار همین الان است.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "scale": "A",
+      "reverse": false,
+      "text": "انتظارات خانواده ام از من بیشتر از چیزی است که میتوانم انجام دهم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "scale": "L",
+      "reverse": true,
+      "text": "گاهی وقتی کسی مرا عصبانی میکند دلم میخواهد چیزی تند بگویم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "scale": "F",
+      "reverse": false,
+      "text": "بدنم گاهی بدون دلیل بی حس یا سنگین میشود.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "scale": "K",
+      "reverse": false,
+      "text": "من ترجیح میدهم مشکلاتم را خودم حل کنم تا اینکه با کسی در میان بگذارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "من به طور مداوم بدنم را برای یافتن علائم غیر عادی بررسی میکنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "scale": "D",
+      "reverse": false,
+      "text": "حتی وقتی اتفاق خوبی می افتد نمیتوانم واقعاً خوشحال شوم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "پزشکان برای مشکلات جسمی من دلیل پزشکی پیدا نمیکنند اما من مطمئنم که واقعی هستند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "scale": "Pa",
+      "reverse": false,
+      "text": "به سختی میتوانم به دوستانم اعتماد کنم حتی وقتی دلیلی برای شک ندارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "scale": "Sc",
+      "reverse": false,
+      "text": "وقتی اتفاق بدی می افتد نه غم دارم نه ترس فقط بی تفاوتم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 48,
+      "scale": "Ma",
+      "reverse": false,
+      "text": "گاهی احساس میکنم از بقیه هم سن و سالهایم باهوش تر یا توانمندتر هستم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "scale": "Pd",
+      "reverse": false,
+      "text": "اغلب با والدینم دعوا دارم و احساس میکنم آنها ناعادلانه رفتار میکنند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "scale": "Si",
+      "reverse": false,
+      "text": "بودن در جمع مرا خسته میکند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "scale": "PK",
+      "reverse": false,
+      "text": "گاهی اتفاقی کوچک کافی است تا ناگهان خاطره ناراحت کننده گذشته دوباره زنده شود.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "scale": "A",
+      "reverse": false,
+      "text": "تنشها و مشکلات خانوادگی ذهن مرا مشغول می کنند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "scale": "L",
+      "reverse": true,
+      "text": "گاهی از اینکه دوستانم چیزهایی دارند که من ندارم ناراحت میشوم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "scale": "F",
+      "reverse": false,
+      "text": "من چیزهایی میبینم که به نظر میرسد دیگران متوجه آنها نمی شوند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "scale": "K",
+      "reverse": false,
+      "text": "به ندرت پیش می آید که از دست کسی واقعاً عصبانی شوم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "من بیشتر از هم سن و سالهایم به پزشک مراجعه میکنم یا دوست دارم مراجعه کنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 57,
+      "scale": "D",
+      "reverse": false,
+      "text": "احساس میکنم به عنوان یک آدم ارزش زیادی ندارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "وقتی استرس دارم سرگیجه یا حالت تهوع پیدا میکنم که با استراحت خوب میشود.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 59,
+      "scale": "Pa",
+      "reverse": false,
+      "text": "وقتی کسی با من مهربان است اول فکر میکنم چه چیزی از من میخواهد.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "scale": "Sc",
+      "reverse": false,
+      "text": "گاهی احساس میکنم دنیا یا خودم واقعی نیست.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 61,
+      "scale": "Ma",
+      "reverse": false,
+      "text": "گاهی احساس میکنم برای کارهای بزرگ و خاصی در نظر گرفته شده ام.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "scale": "Pd",
+      "reverse": false,
+      "text": "احساس میکنم دیگران در گذشته از من سوء استفاده کرده اند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "scale": "Si",
+      "reverse": false,
+      "text": "ترجیح میدهم بیشتر وقتم را تنها باشم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "scale": "PK",
+      "reverse": false,
+      "text": "سعی میکنم به آن اتفاق فکر نکنم یا درباره اش حرف نزنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 65,
+      "scale": "A",
+      "reverse": false,
+      "text": "احساس میکنم باید همیشه خودم را به دیگران ثابت کنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 66,
+      "scale": "L",
+      "reverse": true,
+      "text": "گاهی وقتی قانونی به نظرم بی معنی میرسد دلم میخواهد آن را نادیده بگیرم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 67,
+      "scale": "F",
+      "reverse": false,
+      "text": "گاهی احساس میکنم افکارم آن قدر عجیب اند که نمیتوانم آنها را برای کسی توضیح دهم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 68,
+      "scale": "K",
+      "reverse": false,
+      "text": "من آدمی هستم که دیگران میتوانند روی او حساب کنند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 69,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "من زیاد در اینترنت درباره بیماریها و علائمشان جستجو میکنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "scale": "D",
+      "reverse": false,
+      "text": "تصمیم گیری حتی درباره چیزهای ساده برایم سخت شده است.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 71,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "گاهی بدون دلیل مشخص قلبم تند میزند یا احساس تنگی نفس میکنم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 72,
+      "scale": "Pa",
+      "reverse": false,
+      "text": "وقتی کسی بیش از حد صمیمی میشود اول شک میکنم که نیت پنهانی دارد.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 73,
+      "scale": "Sc",
+      "reverse": false,
+      "text": "گاهی افکاری به ذهنم میرسد که انگار مال من نیستند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 74,
+      "scale": "Ma",
+      "reverse": false,
+      "text": "وقتی حالم خوب است کارهایی میکنم که بعداً پشیمان میشوم مثل خرج کردن زیاد یا قول های غیر واقعی).",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 75,
+      "scale": "Pd",
+      "reverse": false,
+      "text": "به اکثر آدم ها اعتماد نمیکنم چون فکر میکنم فقط به فکر خودشان هستند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 76,
+      "scale": "Si",
+      "reverse": false,
+      "text": "وقتی میتوانم از رویدادهای اجتماعی کنار بکشم این کار را میکنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 77,
+      "scale": "PK",
+      "reverse": false,
+      "text": "بعد از آن اتفاق، احساس میکنم دیگر نمیتوانم مثل قبل به کسی اعتماد کنم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 78,
+      "scale": "A",
+      "reverse": false,
+      "text": "مسئولیتهایم نسبت به دوستان و اطرافیانم گاهی سنگین میشود.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 79,
+      "scale": "L",
+      "reverse": true,
+      "text": "گاهی وقتی اشتباه میکنم سعی میکنم تقصیر را به گردن دیگری بیندازم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 80,
+      "scale": "F",
+      "reverse": false,
+      "text": "گاهی احساس میکنم روحم از بدنم جدا شده است.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 81,
+      "scale": "K",
+      "reverse": false,
+      "text": "من با اکثر افرادی که میشناسم رابطه خوبی دارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 82,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "گاهی از ورزش یا فعالیت بدنی اجتناب میکنم چون نگرانم به بدنم آسیب بزند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 83,
+      "scale": "D",
+      "reverse": false,
+      "text": "صبح ها از خواب بیدار شدن و شروع روز برایم خیلی سخت است.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 84,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "وقتی ناراحت یا تحت فشارم بدنم واکنش نشان میدهد؛ مثلاً سردرد میگیرم یا دلم درد می کند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 85,
+      "scale": "Pa",
+      "reverse": false,
+      "text": "وقتی کسی از من انتقاد میکند مدتها به آن فکر میکنم و ناراحت میمانم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 86,
+      "scale": "Sc",
+      "reverse": false,
+      "text": "گاهی احساس میکنم از بیرون به خودم نگاه میکنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 87,
+      "scale": "Ma",
+      "reverse": false,
+      "text": "گاهی بدون فکر کردن وارد موقعیتهای خطرناک یا هیجانی میشوم چون احساس شکست ناپذیری دارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 88,
+      "scale": "Pd",
+      "reverse": false,
+      "text": "گاهی برای رسیدن به خواسته ام حقیقت را کمی تغییر میدهم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 89,
+      "scale": "Si",
+      "reverse": false,
+      "text": "گاهی احساس میکنم حتی در کنار آدمهای آشنا هم تنها هستم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 90,
+      "scale": "PK",
+      "reverse": false,
+      "text": "گاهی خودم را به خاطر آنچه اتفاق افتاده سرزنش میکنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 91,
+      "scale": "A",
+      "reverse": false,
+      "text": "اغلب احساس میکنم خسته ام حتی وقتی کار زیادی نکرده ام",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 92,
+      "scale": "L",
+      "reverse": true,
+      "text": "گاهی وقتی کار خسته کننده ای دارم آن را به تعویق می اندازم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 93,
+      "scale": "F",
+      "reverse": false,
+      "text": "گاهی چیزهایی برایم اتفاق میافتد که هیچ کس دیگری آنها را تجربه نمی کند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 94,
+      "scale": "K",
+      "reverse": false,
+      "text": "حتی وقتی از دست اعضای خانواده ام ناراحتم سعی میکنم چیزی به روی خودم نیاورم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 95,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "نگرانی درباره سلامتم باعث شده کمتر از قبل از زندگی لذت ببرم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 96,
+      "scale": "D",
+      "reverse": false,
+      "text": "انرژی ام آن قدر کم است که حتی کارهای ساده روزمره سنگین به نظر میرسند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 97,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "حتمی وقتی همه چیز خوب پیش نمیرود باز هم احساس میکنم اوضاع من بهتر از بیشتر آدم هاست.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 98,
+      "scale": "Pa",
+      "reverse": false,
+      "text": "احساس میکنم در مقایسه با دیگران با من منصفانه رفتار نمی شود.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 99,
+      "scale": "Sc",
+      "reverse": false,
+      "text": "گاهی صداها یا تصاویری تجربه میکنم که مطمئن نیستم واقعی هستند یا نه.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 100,
+      "scale": "Ma",
+      "reverse": false,
+      "text": "وقتی کسی جلوی کاری را که میخواهم بگیرد خیلی سریع عصبانی میشوم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 101,
+      "scale": "Pd",
+      "reverse": false,
+      "text": "وقتی کسی آسیب میبیند معمولاً فکر میکنم خودش مقصر بوده.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "scale": "Si",
+      "reverse": false,
+      "text": "احساس میکنم با اکثر همسالانم خیلی فرق دارم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "scale": "PK",
+      "reverse": false,
+      "text": "بعد از آن اتفاق، احساس میکنم نسبت به چیزهایی که قبلاً دوست داشتم بی تفاوت شده ام.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "scale": "A",
+      "reverse": false,
+      "text": "وقتی مشکلات روی هم انباشته میشوند احساس میکنم دارم از پا در می آیم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 105,
+      "scale": "L",
+      "reverse": false,
+      "text": "گاهی در مکالمه چیزی میگویم که کاملاً درست نیست تا موقعیت را راحت تر کنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 106,
+      "scale": "F",
+      "reverse": false,
+      "text": "گاهی بوهایی احساس میکنم که دیگران نمی فهمند از کجاست.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 107,
+      "scale": "K",
+      "reverse": false,
+      "text": "ترجیح میدهم دیگران از مشکلات خصوصی ام چیزی ندانند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 108,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "وقتی پزشک میگوید مشکلی ندارم فقط برای مدت کوتاهی آرام میشوم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 109,
+      "scale": "D",
+      "reverse": false,
+      "text": "وقتی به آینده فکر میکنم بیشتر چیزهای بد میبینم تا خوب",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 110,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "وقتی حالم خوب نیست دلم میخواهد دیگران بیشتر هوای مرا داشته باشند و به من برسند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 111,
+      "scale": "Pa",
+      "reverse": false,
+      "text": "وقتی معلم یا بزرگتری نمره یا نظر بدی به من میدهد فکر میکنم شخصی است نه عادلانه",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 112,
+      "scale": "Sc",
+      "reverse": false,
+      "text": "بعضی وقتها چیزهایی میبینم یا حس میکنم که دیگران نمیبینند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 113,
+      "scale": "Ma",
+      "reverse": false,
+      "text": "قوانین و محدودیتها بیشتر برای افرادی است که توانایی من را ندارند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 114,
+      "scale": "Pd",
+      "reverse": false,
+      "text": "گاهی بدون دلیل مشخص احساس خشم یا بیقراری شدید میکنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 115,
+      "scale": "Si",
+      "reverse": false,
+      "text": "نگران این هستم که دیگران درباره ام چه فکری می کنند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 116,
+      "scale": "PK",
+      "reverse": false,
+      "text": "من اغلب در حالت آماده باش هستم انگار که خطری در کمین است.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 117,
+      "scale": "A",
+      "reverse": false,
+      "text": "اغلب بدون دلیل مشخص احساس نگرانی یا دلشوره میکنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 118,
+      "scale": "L",
+      "reverse": false,
+      "text": "گاهی وقتی از کسی خوشم نمی آید سعی میکنم آن را پنهان کنم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 119,
+      "scale": "F",
+      "reverse": false,
+      "text": "احساس میکنم حشراتی زیر پوستم حرکت میکنند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 120,
+      "scale": "K",
+      "reverse": false,
+      "text": "ترجیح میدهم به مشکلاتم زیاد فکر نکنم تا اینکه ذهنم درگیر شود.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 121,
+      "scale": "Hs",
+      "reverse": false,
+      "text": "فکر میکنم بدن من ضعیف تر از بقیه هم سن و سال هایم است.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 122,
+      "scale": "D",
+      "reverse": false,
+      "text": "گاهی فکر میکنم اگر نبودم فرقی برای کسی نداشت.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 123,
+      "scale": "Hy",
+      "reverse": false,
+      "text": "گاهی وقتی ناراحتم اشتهایم را از دست میدهم یا برعکس بیش از حد میخورم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 124,
+      "scale": "Pa",
+      "reverse": true,
+      "text": "معمولاً به دیگران اعتماد دارم و فکر نمیکنم کسی بخواهد به من آسیب بزند.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 125,
+      "scale": "Sc",
+      "reverse": true,
+      "text": "افکارم معمولاً واضح اند و به راحتی میتوانم تمرکز کنم و آنچه را در ذهنم میگذرد دنبال کنم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 126,
+      "scale": "Ma",
+      "reverse": true,
+      "text": "حال و انرژی ام معمولاً در طول روز یکنواخت است و کمتر پیش می آید ناگهان خیلی پرشور یا بی حال شوم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 127,
+      "scale": "Pd",
+      "reverse": true,
+      "text": "حتی وقتی مطمئنم کسی متوجه نمیشود باز هم سعی میکنم کار درست را انجام دهم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 128,
+      "scale": "Si",
+      "reverse": true,
+      "text": "در مهمانیها اغلب ترجیح میدهم گوشه ای بنشینم تا اینکه با دیگران صحبت کنم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": 129,
+      "scale": "PK",
+      "reverse": false,
+      "text": "از صداهای بلند یا ناگهانی خیلی بیشتر از بقیه میترسم یا جا میخورم",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 1
+        },
+        {
+          "value": "no",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": 130,
+      "scale": "A",
+      "reverse": true,
+      "text": "معمولاً میتوانم فشارهای زندگی ام را مدیریت کنم.",
+      "options": [
+        {
+          "value": "yes",
+          "weight": 0
+        },
+        {
+          "value": "no",
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

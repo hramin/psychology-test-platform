@@ -93,6 +93,30 @@ curl -X PATCH localhost/api/v1/attempts/<id>/answers -H 'content-type: applicati
 curl -X POST localhost/api/v1/attempts/<id>/finish
 ```
 
+## Scoring Engine service (`engine/`)
+
+A **standalone, stateless** FastAPI service that loads **instrument plugins** and exposes a scoring API.
+It has **no database and no dependency on the app** — it's the one service extracted from the modular
+monolith (see `ARCHITECTURE_AND_PLAN.md` §0). MMPI is the first plugin (byte-for-byte faithful to the
+original); a tiny `wellbeing-8` Likert plugin proves the architecture supports a totally different
+calculation + result path. Full contract and a "how to add an instrument" guide live in
+[`engine/ENGINE.md`](engine/ENGINE.md).
+
+It runs as its own Compose service, reachable only on the internal network (no host port, Nginx never
+proxies to it). The app will call it via `EngineClient` in Phase 5.
+
+```bash
+docker compose up engine                 # serve (internal); GET /healthz inside the network
+docker compose run --rm engine pytest    # unit + API + MMPI equivalence (release blocker), all green
+```
+
+| Method & path | Purpose |
+|---|---|
+| `GET  /healthz` | liveness + plugin count |
+| `GET  /instruments` | `[{slug, version, title, kind}]` |
+| `GET  /instruments/{slug}/schema?version=` | InstrumentMeta + QuestionSchema |
+| `POST /score` | `{slug, version?, responses, demographics}` → `{score_result, result_view}` |
+
 ## Project layout
 
 ```
