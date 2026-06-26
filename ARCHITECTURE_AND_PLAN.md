@@ -44,7 +44,7 @@ flowchart TB
         OS[("Garage — PDFs")]
     end
     subgraph Ext["External"]
-        SMS["Kavenegar"]; BANK["ZarinPal"]; WP[("WordPress MySQL")]
+        SMS["Kavenegar"]; BANK["ZarinPal"]; WP["WordPress (REST API)"]
     end
     U-->NG-->WEB
     R-->NG-->APIB
@@ -59,8 +59,8 @@ flowchart TB
     WN-->SMS
     WR-->OS
     MOD-- token+verify inline -->BANK
-    BEAT-- read-only -->WP
-    MOD-- write via REST API -->WP
+    BEAT-- REST: pull users -->WP
+    MOD-- REST: push users -->WP
     classDef future stroke-dasharray:5 5,stroke:#94a3b8,color:#94a3b8;
     class WAI future;
 ```
@@ -218,9 +218,9 @@ sequenceDiagram
 - **Billing/pricing:** entitlement primitive + atomic wallet debit + append-only ledger (unchanged);
   per-test price lives on `test_versions`, admin-editable, read by billing. Individual pay-per-exam
   and org wallet/allocation both produce entitlements.
-- **WordPress sync (bidirectional):** read via read-only MySQL, write via WP REST API only; phone is
-  the join key; last-modified-wins; loop-prevented; off the request path. cPanel connection guide is
-  in PHASE_PROMPTS.md.
+- **WordPress sync (bidirectional):** **BOTH directions via the WP REST API (no direct MySQL)**; phone
+  is the join key (exposed to REST via a must-use plugin); last-modified-wins; loop-prevented; off the
+  request path. REST setup guide in PHASE_PROMPTS.md.
 - **Reports:** Playwright/Chromium HTML→PDF, **generic over ResultView**, RTL/Vazirmatn, Garage +
   signed URLs, isolated `reports` worker.
 - **AI:** future `ai` worker writes `interpretations(source='ai')` from the ResultView — zero schema

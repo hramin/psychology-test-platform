@@ -109,10 +109,13 @@ its own price** in the catalog (per test_version), admin-editable, read by billi
 needs no code.
 
 ## WordPress sync (bidirectional, off the request path)
-READ from WP via a direct **read-only** MySQL connection; **WRITE** to WP **only** via the WordPress
-REST API (Application Passwords) over HTTPS — never write `wp_users`/`wp_usermeta` directly. Phone is
-the join key; last-modified-wins; no deletes; idempotent; loop-prevented. New local signups are
-pushed to WP; WP users are pulled back in. See the cPanel guide in PHASE_PROMPTS.md.
+Use the **WordPress REST API for BOTH directions** (read and write) over HTTPS — **no direct MySQL
+connection**. READ lists/pulls users via REST; WRITE creates/updates users via REST (never write
+`wp_users`/`wp_usermeta` directly). The phone usermeta must be exposed to REST via a small must-use
+plugin (`show_in_rest`). Phone is the join key; last-modified-wins; no deletes; idempotent;
+loop-prevented. Caveat: the core users endpoint has no clean "modified since" filter, so detect edits
+via a periodic full paginated scan or a small WP-side timestamp helper (see the guide in
+PHASE_PROMPTS.md).
 
 ## Reports & AI
 Reports: HTML→PDF via Playwright/Chromium (RTL, Vazirmatn), rendered **generically from ResultView**,
