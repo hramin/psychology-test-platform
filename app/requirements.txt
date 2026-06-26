@@ -12,6 +12,9 @@ alembic>=1.13
 pydantic-settings>=2.2
 redis>=5.0
 
+# Auth
+argon2-cffi>=23.1   # argon2id password hashing (username/password login + reset)
+
 # Tasks / notifications
 celery>=5.3
 kavenegar  # SMS/OTP SDK (imported lazily; only the worker needs it at runtime)

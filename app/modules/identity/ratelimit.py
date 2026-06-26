@@ -55,3 +55,35 @@ async def check_otp_allowed(
         count = await _incr_window(redis, f"otp:ip:{purpose}:{ip}", _HOUR)
         if count > settings.otp_ip_hourly_max:
             raise RateLimited(_TOO_MANY)
+
+
+# ── password-login brute-force guard (separate from OTP) ─────────────────────
+# Different semantics from OTP (no 60s cooldown — a user may retype a typo): a
+# fixed-window *failure* counter per identifier + per IP. ``check`` runs before a
+# verify; ``note_password_failure`` ticks only when the password was wrong, so a
+# correct password is never throttled.
+async def check_password_login_allowed(
+    redis: aioredis.Redis, subject: str, ip: str | None
+) -> None:
+    """Raise :class:`RateLimited` if recent failed password attempts for this
+    identifier or source IP exceed the configured caps."""
+    sub_max = settings.password_login_subject_max
+    if sub_max > 0:
+        n = await redis.get(f"pwlogin:sub:{subject}")
+        if n is not None and int(n) >= sub_max:
+            raise RateLimited(_TOO_MANY)
+    if ip and settings.password_login_ip_max > 0:
+        n = await redis.get(f"pwlogin:ip:{ip}")
+        if n is not None and int(n) >= settings.password_login_ip_max:
+            raise RateLimited(_TOO_MANY)
+
+
+async def note_password_failure(
+    redis: aioredis.Redis, subject: str, ip: str | None
+) -> None:
+    """Record one failed password attempt (per identifier + per source IP)."""
+    window = settings.password_login_window_seconds
+    if settings.password_login_subject_max > 0:
+        await _incr_window(redis, f"pwlogin:sub:{subject}", window)
+    if ip and settings.password_login_ip_max > 0:
+        await _incr_window(redis, f"pwlogin:ip:{ip}", window)

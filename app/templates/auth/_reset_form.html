@@ -1,0 +1,19 @@
+<div id="auth-area">
+  <p class="lead">اگر حسابی با این مشخصات وجود داشته باشد، کد بازیابی ارسال شد. کد و گذرواژهٔ جدید را وارد کنید.</p>
+  {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+  <form hx-post="/auth/reset" hx-target="#auth-area" hx-swap="outerHTML">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <input type="hidden" name="identifier" value="{{ identifier }}">
+    <div class="field">
+      <label>کد بازیابی</label>
+      <input type="text" name="code" inputmode="numeric" dir="ltr" autocomplete="one-time-code"
+             placeholder="-----" required autofocus>
+    </div>
+    <div class="field">
+      <label>گذرواژهٔ جدید</label>
+      <input type="password" name="password" autocomplete="new-password" required>
+    </div>
+    <button type="submit" class="btn block">تنظیم گذرواژه و ورود</button>
+  </form>
+</div>

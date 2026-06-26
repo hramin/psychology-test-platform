@@ -12,6 +12,7 @@ methods drop in with zero rework.
 
 from __future__ import annotations
 
+import logging
 import re
 
 import redis.asyncio as aioredis
@@ -21,9 +22,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.errors import AppError, ValidationError
-from app.modules.identity import otp, ratelimit, sessions
+from app.modules.identity import otp, passwords, ratelimit, sessions
 from app.modules.identity.models import OrgMember, Organization, User
 from app.modules.notifications import service as notifications
+
+log = logging.getLogger("identity.service")
 
 # ── phone normalization (Iran mobile) ────────────────────────────────────────
 _FA_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
@@ -55,6 +58,16 @@ async def get_by_phone(session: AsyncSession, phone: str) -> User | None:
     ).scalar_one_or_none()
 
 
+async def get_by_username(session: AsyncSession, username: str) -> User | None:
+    """Exact-match lookup (username is unique). Empty/blank → ``None``."""
+    username = (username or "").strip()
+    if not username:
+        return None
+    return (
+        await session.execute(select(User).where(User.username == username))
+    ).scalar_one_or_none()
+
+
 async def get_or_create_user(
     session: AsyncSession, phone: str, source: str = "local"
 ) -> User:
@@ -80,8 +93,16 @@ async def get_or_create_user(
 async def update_profile(
     session: AsyncSession, user: User, fields: dict
 ) -> User:
-    """Fill the nullable profile fields skipped at signup."""
-    for key in ("username", "full_name", "email"):
+    """Fill the nullable profile fields skipped at signup. ``username`` is unique;
+    a clash with another account is reported (the DB index is the race backstop)."""
+    if "username" in fields:
+        new_username = (fields.get("username") or "").strip() or None
+        if new_username and new_username != user.username:
+            clash = await get_by_username(session, new_username)
+            if clash is not None and clash.id != user.id:
+                raise ValidationError("این نام کاربری قبلاً انتخاب شده است.")
+        user.username = new_username
+    for key in ("full_name", "email"):
         if key in fields:
             value = (fields.get(key) or "").strip()
             setattr(user, key, value or None)
@@ -170,6 +191,136 @@ async def get_current_user(
 
 async def logout(redis: aioredis.Redis, sid: str | None) -> None:
     await sessions.destroy(redis, sid)
+
+
+async def invalidate_user_sessions(redis: aioredis.Redis, user: User) -> int:
+    """Revoke every active session for ``user`` (used after a password reset)."""
+    return await sessions.destroy_all_for_user(redis, user.id)
+
+
+# ── passwords: set/change, login, recovery (Phase 3) ─────────────────────────
+# All three credential paths live here (never in routes/templates); every
+# successful one ends at the same ``establish_session`` seam as OTP login.
+_BAD_CREDENTIALS = "نام کاربری یا گذرواژه نادرست است."
+_BAD_RESET = "کد بازیابی نامعتبر یا منقضی شده است."
+_WRONG_CURRENT = "گذرواژه فعلی نادرست است."
+
+
+def _weak_password_msg() -> str:
+    return f"گذرواژه باید دست‌کم {settings.password_min_length} نویسه باشد."
+
+
+async def _resolve_identifier(
+    session: AsyncSession, raw: str
+) -> tuple[str, User | None, str | None]:
+    """Map a typed identifier (phone *or* username) → ``(subject, user, phone)``.
+
+    ``subject`` is a rate-limit key derived purely from the input — the normalized
+    phone when it parses as one, else the case-folded username — so limiting never
+    depends on whether the account exists (no enumeration). ``user``/``phone`` are
+    ``None`` when nothing matches."""
+    raw = (raw or "").strip()
+    try:
+        phone = normalize_phone(raw)
+    except ValidationError:
+        phone = None
+    if phone is not None:
+        user = await get_by_phone(session, phone)
+        return phone, user, phone
+    user = await get_by_username(session, raw)
+    return raw.casefold(), user, (user.phone if user is not None else None)
+
+
+async def change_password(
+    session: AsyncSession,
+    user: User,
+    current_password: str | None,
+    new_password: str,
+) -> User:
+    """Set or change ``user``'s password while authenticated. Changing an existing
+    password requires the correct current one; a first-time set (OTP-only user
+    with no hash yet) does not."""
+    if len(new_password or "") < settings.password_min_length:
+        raise ValidationError(_weak_password_msg())
+    if user.password_hash and not passwords.verify_password(
+        user.password_hash, current_password or ""
+    ):
+        raise ValidationError(_WRONG_CURRENT)
+    user.password_hash = passwords.hash_password(new_password)
+    await session.flush()
+    log.info("password set/changed for user_id=%s", user.id)
+    return user
+
+
+async def login_with_password(
+    session: AsyncSession,
+    redis: aioredis.Redis,
+    identifier: str,
+    password: str,
+    ip: str | None,
+) -> tuple[User, str]:
+    """Authenticate by username-or-phone + password, then open a session. Every
+    failure mode returns one identical error (and burns equivalent CPU) so the
+    response never reveals whether the account exists or has a password set."""
+    subject, user, _phone = await _resolve_identifier(session, identifier)
+    await ratelimit.check_password_login_allowed(redis, subject, ip)
+    stored = user.password_hash if user is not None else None
+    if not passwords.verify_password(stored, password or ""):
+        if not stored:  # no user / no password → spend the same time regardless
+            passwords.verify_password(passwords.DUMMY_HASH, password or "")
+        await ratelimit.note_password_failure(redis, subject, ip)
+        raise ValidationError(_BAD_CREDENTIALS)
+    sid = await establish_session(redis, user)
+    return user, sid
+
+
+async def request_password_reset(
+    session: AsyncSession,
+    redis: aioredis.Redis,
+    identifier: str,
+    ip: str | None,
+) -> None:
+    """Issue a purpose-'reset' OTP **iff** the identifier maps to a real account
+    with a phone. Rate-limited on the input-derived subject and silent about the
+    outcome, so callers render an identical screen either way (no enumeration).
+    The 'reset' code is never cross-usable with a 'login' code."""
+    subject, user, phone = await _resolve_identifier(session, identifier)
+    await ratelimit.check_otp_allowed(redis, subject, ip, "reset")
+    if user is not None and phone:
+        code = otp.generate_code()
+        await otp.store(redis, phone, "reset", code)
+        notifications.send_otp_sms(phone, code, "reset")
+        log.info("password reset requested for user_id=%s", user.id)
+
+
+async def reset_password(
+    session: AsyncSession,
+    redis: aioredis.Redis,
+    identifier: str,
+    code: str,
+    new_password: str,
+    ip: str | None,
+) -> tuple[User, str]:
+    """Complete recovery: verify the 'reset' code, set the new password,
+    invalidate ALL of the user's sessions, then open a fresh one (login through
+    the seam). A 'login'-purpose code can't satisfy this (different Redis key +
+    HMAC). Every failure returns one generic error (no enumeration)."""
+    if len(new_password or "") < settings.password_min_length:
+        raise ValidationError(_weak_password_msg())
+    _subject, user, phone = await _resolve_identifier(session, identifier)
+    status = (
+        await otp.verify(redis, phone, "reset", code or "")
+        if user is not None and phone
+        else otp.OtpStatus.EXPIRED
+    )
+    if status is not otp.OtpStatus.OK:
+        raise ValidationError(_BAD_RESET)
+    user.password_hash = passwords.hash_password(new_password)
+    await session.flush()
+    await invalidate_user_sessions(redis, user)
+    sid = await establish_session(redis, user)
+    log.info("password reset completed for user_id=%s (all sessions revoked)", user.id)
+    return user, sid
 
 
 # ── organizations (minimal; billing is Phase 6) ──────────────────────────────

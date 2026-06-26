@@ -35,7 +35,11 @@ class User(Base):
     # Phone is the canonical identity + the WordPress join key.
     phone: Mapped[str] = mapped_column(String(32), unique=True, index=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    username: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Unique so it can resolve a single account at username/password login
+    # (multiple NULLs are allowed by both Postgres and SQLite).
+    username: Mapped[str | None] = mapped_column(
+        String(64), unique=True, index=True, nullable=True
+    )
     full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_admin: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"

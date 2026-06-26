@@ -66,6 +66,14 @@ class Settings(BaseSettings):
     # == login). Set false to reject phones with no existing user.
     otp_auto_create_users: bool = True
 
+    # ── Passwords (Phase 3) ──────────────────────────────────────────────────
+    password_min_length: int = 8
+    # Brute-force guard on username/password login — counters are separate from
+    # the OTP limits and only tick on a *failed* attempt (per identifier + IP).
+    password_login_window_seconds: int = 900   # 15 min sliding-ish fixed window
+    password_login_subject_max: int = 10       # failed tries / window / identifier
+    password_login_ip_max: int = 50            # failed tries / window / source IP
+
     # ── SMS / Kavenegar (Phase 2) ────────────────────────────────────────────
     sms_backend: str = "mock"  # 'mock' (logs the code) | 'kavenegar'
     kavenegar_api_key: str = ""

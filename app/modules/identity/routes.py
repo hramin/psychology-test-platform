@@ -133,6 +133,115 @@ async def verify_otp(
     return resp
 
 
+# ── password login (parallel to OTP; same establish_session seam) ─────────────
+@router.get("/login/password", response_class=HTMLResponse)
+async def password_login_page(
+    request: Request, next: str = "", user: User | None = Depends(current_user)
+):
+    if user is not None:
+        return RedirectResponse(_safe_next(next), status_code=303)
+    token, is_new = _csrf_for(request)
+    return _render(
+        request, "auth/password_login.html",
+        {"csrf_token": token, "next": _safe_next(next), "error": None, "identifier": ""},
+        set_csrf=(token, is_new),
+    )
+
+
+@router.post("/login/password", dependencies=[Depends(verify_csrf)])
+async def password_login(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+    redis: aioredis.Redis = Depends(get_redis),
+):
+    form = await request.form()
+    identifier = (form.get("identifier") or "").strip()
+    nxt = _safe_next(form.get("next"))
+    token = request.cookies.get(settings.csrf_cookie_name) or ""
+    try:
+        _user, sid = await identity.login_with_password(
+            session, redis, identifier, form.get("password") or "", _client_ip(request)
+        )
+    except AppError as exc:
+        return _render(
+            request, "auth/_password_login_form.html",
+            {"csrf_token": token, "next": nxt, "error": exc.message, "identifier": identifier},
+        )
+    resp = _hx_redirect(nxt)
+    _set_cookie(resp, settings.session_cookie_name, sid)
+    return resp
+
+
+# ── forgot password (step 1: request a reset code) ────────────────────────────
+@router.get("/forgot", response_class=HTMLResponse)
+async def forgot_page(
+    request: Request, next: str = "", user: User | None = Depends(current_user)
+):
+    if user is not None:
+        return RedirectResponse(_safe_next(next), status_code=303)
+    token, is_new = _csrf_for(request)
+    return _render(
+        request, "auth/forgot.html",
+        {"csrf_token": token, "next": _safe_next(next), "error": None, "identifier": ""},
+        set_csrf=(token, is_new),
+    )
+
+
+@router.post("/forgot", dependencies=[Depends(verify_csrf)])
+async def forgot_request(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+    redis: aioredis.Redis = Depends(get_redis),
+):
+    form = await request.form()
+    identifier = (form.get("identifier") or "").strip()
+    nxt = _safe_next(form.get("next"))
+    token = request.cookies.get(settings.csrf_cookie_name) or ""
+    try:
+        await identity.request_password_reset(
+            session, redis, identifier, _client_ip(request)
+        )
+    except AppError as exc:
+        # Only rate-limiting (429) can surface here; account existence never does.
+        return _render(
+            request, "auth/_forgot_form.html",
+            {"csrf_token": token, "next": nxt, "error": exc.message, "identifier": identifier},
+        )
+    # Identical response whether or not the account exists → no enumeration.
+    return _render(
+        request, "auth/_reset_form.html",
+        {"csrf_token": token, "next": nxt, "error": None, "identifier": identifier},
+    )
+
+
+# ── forgot password (step 2: submit code + new password → logged in) ──────────
+@router.post("/reset", dependencies=[Depends(verify_csrf)])
+async def reset_submit(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+    redis: aioredis.Redis = Depends(get_redis),
+):
+    form = await request.form()
+    identifier = (form.get("identifier") or "").strip()
+    nxt = _safe_next(form.get("next"))
+    token = request.cookies.get(settings.csrf_cookie_name) or ""
+    try:
+        _user, sid = await identity.reset_password(
+            session, redis, identifier,
+            form.get("code") or "", form.get("password") or "", _client_ip(request),
+        )
+        await session.commit()
+    except AppError as exc:
+        await session.rollback()
+        return _render(
+            request, "auth/_reset_form.html",
+            {"csrf_token": token, "next": nxt, "error": exc.message, "identifier": identifier},
+        )
+    resp = _hx_redirect(nxt)
+    _set_cookie(resp, settings.session_cookie_name, sid)
+    return resp
+
+
 # ── logout ────────────────────────────────────────────────────────────────────
 @router.post("/logout", dependencies=[Depends(verify_csrf)])
 async def logout(request: Request, redis: aioredis.Redis = Depends(get_redis)):
@@ -162,17 +271,51 @@ async def update_profile(
 ):
     form = await request.form()
     token = request.cookies.get(settings.csrf_cookie_name) or ""
-    await identity.update_profile(
-        session,
-        user,
-        {
-            "username": form.get("username"),
-            "full_name": form.get("full_name"),
-            "email": form.get("email"),
-        },
-    )
-    await session.commit()
+    try:
+        await identity.update_profile(
+            session,
+            user,
+            {
+                "username": form.get("username"),
+                "full_name": form.get("full_name"),
+                "email": form.get("email"),
+            },
+        )
+        await session.commit()
+    except AppError as exc:
+        await session.rollback()
+        return _render(
+            request, "auth/_profile_form.html",
+            {"csrf_token": token, "user": user, "saved": False, "error": exc.message},
+        )
     return _render(
         request, "auth/_profile_form.html",
         {"csrf_token": token, "user": user, "saved": True, "error": None},
+    )
+
+
+# ── set / change password (auth required) ─────────────────────────────────────
+@router.post("/password", response_class=HTMLResponse, dependencies=[Depends(verify_csrf)])
+async def change_password(
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+    user: User = Depends(login_required),
+):
+    form = await request.form()
+    token = request.cookies.get(settings.csrf_cookie_name) or ""
+    saved, error = False, None
+    try:
+        await identity.change_password(
+            session, user,
+            form.get("current_password") or "",
+            form.get("new_password") or "",
+        )
+        await session.commit()
+        saved = True
+    except AppError as exc:
+        await session.rollback()
+        error = exc.message
+    return _render(
+        request, "auth/_password_form.html",
+        {"csrf_token": token, "user": user, "saved": saved, "error": error},
     )
