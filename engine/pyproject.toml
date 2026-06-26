@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scoring-engine"
+version = "0.1.0"
+description = "Standalone, stateless scoring engine with instrument plugins."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.30",
+    "gunicorn>=22.0",
+    "pydantic>=2.6",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "httpx>=0.27",  # required by Starlette/FastAPI TestClient
+]
+
+[tool.setuptools.packages.find]
+include = ["engine*"]
+
+[tool.setuptools.package-data]
+# bundle the verified MMPI definition with the plugin
+"engine.instruments.mmpi" = ["*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
