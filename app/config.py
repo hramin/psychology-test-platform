@@ -45,6 +45,46 @@ class Settings(BaseSettings):
     definition_seed_path: str = "mmpi_v1.json"
     test_slug: str = "mmpi-teen-13"
 
+    # ── Sessions & cookies (Phase 2) ─────────────────────────────────────────
+    session_cookie_name: str = "pst_session"
+    csrf_cookie_name: str = "pst_csrf"
+    session_ttl_seconds: int = 60 * 60 * 24 * 14  # 14 days
+    # Secure cookies require HTTPS; off by default so dev over http://localhost
+    # works. MUST be true in any real (TLS) deployment — set COOKIE_SECURE=true.
+    cookie_secure: bool = False
+    cookie_samesite: str = "lax"
+
+    # ── OTP (Phase 2) ────────────────────────────────────────────────────────
+    otp_ttl_seconds: int = 120
+    otp_code_length: int = 5
+    otp_max_attempts: int = 5  # wrong tries before the code is burned
+    # Hard rate limits (per phone + per IP), counted per purpose ('login'/'reset').
+    otp_phone_cooldown_seconds: int = 60       # ≥ 1 SMS / 60s per phone
+    otp_phone_hourly_max: int = 5              # ≤ 5 SMS / hour per phone
+    otp_ip_hourly_max: int = 20                # per-IP cap / hour
+    # Unknown phone on successful verify → create a source='local' user (signup
+    # == login). Set false to reject phones with no existing user.
+    otp_auto_create_users: bool = True
+
+    # ── SMS / Kavenegar (Phase 2) ────────────────────────────────────────────
+    sms_backend: str = "mock"  # 'mock' (logs the code) | 'kavenegar'
+    kavenegar_api_key: str = ""
+    kavenegar_sender: str = ""
+    kavenegar_use_template: bool = False       # true → verify_lookup (OTP template)
+    kavenegar_otp_template: str = ""
+    otp_message_template: str = "کد ورود شما: {code}"
+
+    # ── Celery (Phase 2) ─────────────────────────────────────────────────────
+    # Default broker/result to the Redis URL; override per-env if desired.
+    celery_broker_url: str = ""
+    celery_result_backend: str = ""
+    celery_task_always_eager: bool = False     # tests set this true (run inline)
+
+    # ── Admin bootstrap (Phase 2) ────────────────────────────────────────────
+    # The first admin user, provisioned from the environment (never hardcoded).
+    seed_admin_phone: str = ""
+    seed_admin_username: str = ""
+
     # Garage / S3 — inert until Phase 6 (reports).
     garage_endpoint: str = ""
     garage_key: str = ""

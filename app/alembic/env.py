@@ -19,6 +19,7 @@ from app.db import Base
 
 # Import models so their tables are registered on Base.metadata.
 from app.modules.catalog import models as _catalog_models  # noqa: F401
+from app.modules.identity import models as _identity_models  # noqa: F401
 from app.modules.testing import models as _testing_models  # noqa: F401
 
 config = context.config

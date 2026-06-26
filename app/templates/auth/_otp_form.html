@@ -1,0 +1,21 @@
+<div id="auth-area">
+  <p class="lead">کد تأیید به شماره <span dir="ltr">{{ phone }}</span> ارسال شد.</p>
+  {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+  <form hx-post="/auth/otp/verify" hx-target="#auth-area" hx-swap="outerHTML">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <input type="hidden" name="phone" value="{{ phone }}">
+    <div class="field">
+      <label>کد تأیید</label>
+      <input type="text" name="code" inputmode="numeric" dir="ltr" autocomplete="one-time-code"
+             placeholder="-----" required autofocus>
+    </div>
+    <button type="submit" class="btn block">ورود</button>
+  </form>
+  <form hx-post="/auth/otp/request" hx-target="#auth-area" hx-swap="outerHTML" style="margin-top:.6rem;">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <input type="hidden" name="phone" value="{{ phone }}">
+    <button type="submit" class="btn ghost block">ارسال مجدد کد</button>
+  </form>
+</div>
