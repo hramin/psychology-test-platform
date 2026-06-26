@@ -4,6 +4,7 @@
     اطلاعات با موفقیت ذخیره شد.
   </div>
   {% endif %}
+  {% if error %}<div class="alert">{{ error }}</div>{% endif %}
   <div class="field">
     <label>شماره موبایل</label>
     <input type="text" dir="ltr" value="{{ user.phone }}" readonly>
