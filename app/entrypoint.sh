@@ -18,5 +18,9 @@ done
 echo "[entrypoint] seeding catalog from ${DEFINITION_SEED_PATH:-mmpi_v1.json}..."
 python -m app.modules.catalog.seed || echo "[entrypoint] WARNING: seed step failed (continuing)"
 
+# Provision the bootstrap admin (idempotent; no-op unless SEED_ADMIN_PHONE is set).
+echo "[entrypoint] seeding admin (if SEED_ADMIN_PHONE set)..."
+python -m app.manage seed-admin || echo "[entrypoint] WARNING: seed-admin failed (continuing)"
+
 echo "[entrypoint] starting app: $*"
 exec "$@"

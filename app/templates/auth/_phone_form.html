@@ -1,0 +1,13 @@
+<div id="auth-area">
+  {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+  <form hx-post="/auth/otp/request" hx-target="#auth-area" hx-swap="outerHTML">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="field">
+      <label>شماره موبایل</label>
+      <input type="text" name="phone" inputmode="numeric" dir="ltr" autocomplete="tel"
+             placeholder="۰۹۱۲۳۴۵۶۷۸۹" value="{{ phone }}" required>
+    </div>
+    <button type="submit" class="btn block">دریافت کد ورود</button>
+  </form>
+</div>

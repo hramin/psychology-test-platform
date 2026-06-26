@@ -10,6 +10,10 @@ x-app-env: &app-env
   PGBOUNCER_URL: postgresql+asyncpg://psych:psych@pgbouncer:6432/psych
   REDIS_URL: redis://redis:6379/0
   DEFINITION_SEED_PATH: mmpi_v1.json
+  # Phase 2: dev SMS backend logs the OTP (no Kavenegar creds needed). Set
+  # SMS_BACKEND=kavenegar + KAVENEGAR_* in real deployments. Set SEED_ADMIN_PHONE
+  # (+ SEED_ADMIN_USERNAME) to provision the first admin on startup.
+  SMS_BACKEND: mock
 
 services:
   web:
@@ -23,6 +27,20 @@ services:
       postgres:
         condition: service_healthy
       pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  # Celery worker for the `notifications` queue (OTP SMS). Overrides the image
+  # entrypoint so it does NOT run migrations/seed (the web service owns those).
+  worker-notifications:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    environment: *app-env
+    entrypoint: ["celery", "-A", "app.celery_app", "worker", "-Q", "notifications", "-c", "2", "--loglevel=info"]
+    depends_on:
+      redis:
         condition: service_started
 
   # Standalone, stateless Scoring Engine (own image; bundles instrument plugins).

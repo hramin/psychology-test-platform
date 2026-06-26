@@ -84,3 +84,100 @@ def reference() -> dict:
         return _original_score(parsed, responses, gender)
 
     return {**parsed, "score": score}
+
+
+# ── Phase 2: identity / auth fixtures (no external services) ─────────────────
+# fakeredis stands in for Redis; an in-memory SQLite engine (StaticPool → one
+# shared connection) creates ONLY the identity tables (portable types), so no
+# Postgres is needed; Celery runs eager so SMS sends inline via the mock backend.
+import fakeredis.aioredis  # noqa: E402
+import pytest_asyncio  # noqa: E402
+from sqlalchemy.ext.asyncio import (  # noqa: E402
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.pool import StaticPool  # noqa: E402
+
+from app.config import settings  # noqa: E402
+from app.db import Base  # noqa: E402
+from app.modules.identity.models import OrgMember, Organization, User  # noqa: E402
+
+_IDENTITY_TABLES = [User.__table__, Organization.__table__, OrgMember.__table__]
+
+
+@pytest_asyncio.fixture
+async def redis_fake():
+    r = fakeredis.aioredis.FakeRedis(decode_responses=True)
+    try:
+        yield r
+    finally:
+        await r.flushall()
+        await r.aclose()
+
+
+@pytest_asyncio.fixture
+async def db_engine():
+    engine = create_async_engine(
+        "sqlite+aiosqlite://",
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+    )
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all, tables=_IDENTITY_TABLES)
+    try:
+        yield engine
+    finally:
+        await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def db_session(db_engine):
+    Session = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
+    async with Session() as session:
+        yield session
+
+
+@pytest.fixture
+def eager_sms(monkeypatch):
+    """Run Celery tasks inline and use the mock SMS backend; yields its outbox."""
+    from app.celery_app import celery_app
+    from app.modules.notifications.sms import MockSmsBackend
+
+    monkeypatch.setattr(settings, "sms_backend", "mock")
+    celery_app.conf.task_always_eager = True
+    celery_app.conf.task_eager_propagates = True
+    MockSmsBackend.outbox.clear()
+    try:
+        yield MockSmsBackend.outbox
+    finally:
+        celery_app.conf.task_always_eager = False
+
+
+@pytest_asyncio.fixture
+async def auth_client(db_engine, redis_fake, eager_sms):
+    """httpx AsyncClient over the real ASGI app, with DB+Redis overridden. Uses
+    ASGITransport so the app runs in the test's event loop (shares fakeredis +
+    the SQLite engine)."""
+    from httpx import ASGITransport, AsyncClient
+
+    from app.deps import get_db, get_redis
+    from app.main import app
+
+    Session = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
+
+    async def _db():
+        async with Session() as s:
+            yield s
+
+    async def _redis():
+        yield redis_fake
+
+    app.dependency_overrides[get_db] = _db
+    app.dependency_overrides[get_redis] = _redis
+    transport = ASGITransport(app=app)
+    try:
+        async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+            yield client
+    finally:
+        app.dependency_overrides.clear()
