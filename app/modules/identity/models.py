@@ -48,8 +48,15 @@ class User(Base):
     source: Mapped[str] = mapped_column(
         String(16), default="local", server_default="local"
     )
-    wp_user_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    wp_user_id: Mapped[int | None] = mapped_column(
+        BigInteger, index=True, nullable=True
+    )
+    # Last WP-side modified timestamp we have applied (last-modified-wins input).
     wp_modified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # Last time this row was successfully reconciled with WordPress (push or pull).
+    wp_synced_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     # Reserved for later phases (kept nullable on purpose).
@@ -58,6 +65,11 @@ class User(Base):
     external_sub: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+    # Local last-modified watermark (bumped on any UPDATE) — the local side of the
+    # last-modified-wins comparison with WordPress.
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
 

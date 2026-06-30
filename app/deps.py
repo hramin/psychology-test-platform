@@ -28,6 +28,7 @@ __all__ = [
     "get_redis",
     "current_user",
     "login_required",
+    "admin_required",
     "issue_csrf",
     "verify_csrf",
 ]
@@ -51,6 +52,16 @@ async def login_required(
     login page for HTML, 401 for the API)."""
     if user is None:
         raise AuthRequired("برای دسترسی به این صفحه باید وارد شوید.")
+    return user
+
+
+async def admin_required(
+    user: User = Depends(login_required),
+) -> User:
+    """Require an authenticated **admin**. Builds on ``login_required`` so an
+    anonymous visitor is redirected to login, while a logged-in non-admin gets 403."""
+    if not user.is_admin:
+        raise Forbidden("این بخش تنها برای مدیران در دسترس است.")
     return user
 
 

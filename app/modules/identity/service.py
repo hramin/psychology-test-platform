@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import re
+from datetime import datetime, timezone
 
 import redis.asyncio as aioredis
 from sqlalchemy import select
@@ -52,6 +53,10 @@ def normalize_phone(raw: str) -> str:
 
 
 # ── users ────────────────────────────────────────────────────────────────────
+async def get_by_id(session: AsyncSession, user_id: int) -> User | None:
+    return await session.get(User, user_id)
+
+
 async def get_by_phone(session: AsyncSession, phone: str) -> User | None:
     return (
         await session.execute(select(User).where(User.phone == phone))
@@ -121,6 +126,132 @@ async def upsert_admin(
         user.username = username.strip() or None
     await session.flush()
     return user
+
+
+# ── WordPress sync support (Phase 4) ──────────────────────────────────────────
+# These are the ONLY entry points the wpsync module uses to read/write users (it
+# never touches the table directly). None of them enqueues a push — that keeps the
+# inbound pull path structurally incapable of bouncing a record back to WordPress.
+def _as_aware_utc(dt: datetime | None) -> datetime | None:
+    """Normalize to aware-UTC for safe comparison (SQLite drops tzinfo on read)."""
+    if dt is not None and dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+async def get_by_wp_user_id(
+    session: AsyncSession, wp_user_id: int
+) -> User | None:
+    return (
+        await session.execute(
+            select(User).where(User.wp_user_id == wp_user_id)
+        )
+    ).scalar_one_or_none()
+
+
+async def upsert_from_wordpress(
+    session: AsyncSession,
+    *,
+    phone: str,
+    wp_user_id: int | None,
+    wp_modified_at: datetime | None,
+    email: str | None = None,
+    full_name: str | None = None,
+) -> tuple[User, bool]:
+    """Inbound upsert by phone (the join key), resolving conflicts last-modified-wins.
+
+    Returns ``(user, changed)``. A brand-new phone creates a ``source='wp'`` row.
+    For an existing row we apply WP's fields only when WP is the newer side (its
+    ``wp_modified_at`` is ahead of what we last stored, or no timestamp is available
+    — in which case WP, being authoritative for its own records, wins on a real
+    difference). Re-running with no WP change is a no-op (``changed=False``); a row
+    we just pushed and that echoes back here is recognized and left untouched.
+    """
+    now = datetime.now(timezone.utc)
+    user = None
+    if wp_user_id is not None:
+        user = await get_by_wp_user_id(session, wp_user_id)
+    if user is None:
+        user = await get_by_phone(session, phone)
+
+    if user is None:
+        user = User(
+            phone=phone,
+            source="wp",
+            wp_user_id=wp_user_id,
+            wp_modified_at=wp_modified_at,
+            wp_synced_at=now,
+            email=email,
+            full_name=full_name,
+        )
+        session.add(user)
+        try:
+            await session.flush()
+        except IntegrityError:  # concurrent insert on the same phone
+            await session.rollback()
+            existing = await get_by_phone(session, phone)
+            if existing is None:
+                raise
+            user = existing
+        else:
+            return user, True
+
+    changed = False
+    if wp_user_id is not None and user.wp_user_id is None:
+        user.wp_user_id = wp_user_id
+        changed = True
+    # WP wins when it is the newer side (or when we have no timestamp to compare).
+    # Coerce both sides to aware-UTC first: SQLite reads DateTime(timezone=True)
+    # back as naive, so a raw compare with the aware inbound value would raise.
+    stored_mod = _as_aware_utc(user.wp_modified_at)
+    incoming_mod = _as_aware_utc(wp_modified_at)
+    wp_wins = stored_mod is None or incoming_mod is None or incoming_mod > stored_mod
+    if wp_wins:
+        if email is not None and email != user.email:
+            user.email = email
+            changed = True
+        if full_name is not None and full_name != user.full_name:
+            user.full_name = full_name
+            changed = True
+        if incoming_mod is not None and incoming_mod != stored_mod:
+            user.wp_modified_at = wp_modified_at
+            changed = True
+    if changed:
+        user.wp_synced_at = now
+        await session.flush()
+    return user, changed
+
+
+async def mark_wp_pushed(
+    session: AsyncSession,
+    user: User,
+    *,
+    wp_user_id: int,
+    wp_modified_at: datetime | None = None,
+    synced_at: datetime | None = None,
+) -> User:
+    """Record the result of a successful outbound push: link the WP id and stamp
+    the sync watermark (so the next pull recognizes the echo and does nothing)."""
+    user.wp_user_id = wp_user_id
+    if wp_modified_at is not None:
+        user.wp_modified_at = wp_modified_at
+    user.wp_synced_at = synced_at or datetime.now(timezone.utc)
+    await session.flush()
+    return user
+
+
+async def list_pending_wp_push(
+    session: AsyncSession, limit: int = 200
+) -> list[User]:
+    """Local-origin users not yet linked to a WP account — the reconciler's work
+    list (retries pushes that failed or were never delivered)."""
+    rows = await session.execute(
+        select(User)
+        .where(User.source == "local", User.wp_user_id.is_(None))
+        .order_by(User.id)
+        .limit(limit)
+    )
+    return list(rows.scalars().all())
 
 
 # ── OTP login ─────────────────────────────────────────────────────────────────

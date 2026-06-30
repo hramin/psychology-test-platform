@@ -93,6 +93,33 @@ class Settings(BaseSettings):
     seed_admin_phone: str = ""
     seed_admin_username: str = ""
 
+    # ── WordPress bidirectional sync (Phase 4) ───────────────────────────────
+    # BOTH directions go through the WP REST API (never MySQL). All sync work runs
+    # in Celery workers, off the request path. Disabled by default and pointed at
+    # an in-memory fake client so dev/test/CI never touch the network — set
+    # WP_SYNC_ENABLED=true + WP_CLIENT_BACKEND=http + the WP_* creds to go live.
+    wp_sync_enabled: bool = False
+    wp_client_backend: str = "fake"            # 'fake' (in-memory) | 'http' (real)
+    wp_rest_base: str = ""                      # e.g. https://example.com/wp-json
+    wp_api_user: str = ""                       # least-privilege WP account login
+    wp_api_app_password: str = ""               # Application Password — a SECRET
+    # Usermeta keys exposed to REST by the must-use plugin (wordpress/mu-plugins).
+    wp_phone_meta_key: str = "billing_phone"    # the join key
+    wp_modified_meta_key: str = "pst_modified_gmt"  # last-modified-wins timestamp
+    # Read sync (WP → app).
+    wp_pull_mode: str = "full"                  # 'full' (catches edits) | 'incremental'
+    wp_pull_page_size: int = 100                # REST per_page
+    wp_sync_interval_minutes: int = 10          # Beat cadence for the pull
+    wp_reconcile_interval_minutes: int = 15     # Beat cadence for the push-retry
+    # Write sync (app → WP).
+    # 'synthesize' → derive username/email from phone for phone-only signups so the
+    # WP create always succeeds; 'defer' → push only once a real email exists;
+    # 'manual' → never auto-push (admin "sync now" only).
+    wp_push_policy: str = "synthesize"
+    wp_default_role: str = "subscriber"         # role assigned to pushed users
+    wp_placeholder_email_domain: str = "users.invalid"  # synthesized-email domain
+    wp_http_timeout_seconds: float = 15.0
+
     # Garage / S3 — inert until Phase 6 (reports).
     garage_endpoint: str = ""
     garage_key: str = ""

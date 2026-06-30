@@ -22,6 +22,7 @@ from app.core.templating import templates
 from app.deps import current_user, get_db, get_redis, login_required, verify_csrf
 from app.modules.identity import service as identity
 from app.modules.identity.models import User
+from app.modules.wpsync import service as wpsync
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -128,6 +129,10 @@ async def verify_otp(
             request, "auth/_otp_form.html",
             {"csrf_token": token, "next": nxt, "error": exc.message, "phone": phone},
         )
+    # New local signup → push to WordPress (off the request path; no-op when sync
+    # is off). Already-linked or WP-origin users are left alone (loop-prevention).
+    if _user.source == "local" and _user.wp_user_id is None:
+        wpsync.enqueue_push_user(_user.id)
     resp = _hx_redirect(nxt)
     _set_cookie(resp, settings.session_cookie_name, sid)
     return resp
@@ -288,6 +293,10 @@ async def update_profile(
             request, "auth/_profile_form.html",
             {"csrf_token": token, "user": user, "saved": False, "error": exc.message},
         )
+    # Propagate a local-origin profile edit to WordPress (create if not yet linked,
+    # else update). WP-origin users are left to the pull (last-modified-wins).
+    if user.source == "local":
+        wpsync.enqueue_push_user(user.id)
     return _render(
         request, "auth/_profile_form.html",
         {"csrf_token": token, "user": user, "saved": True, "error": None},

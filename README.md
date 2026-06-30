@@ -117,6 +117,57 @@ docker compose run --rm engine pytest    # unit + API + MMPI equivalence (releas
 | `GET  /instruments/{slug}/schema?version=` | InstrumentMeta + QuestionSchema |
 | `POST /score` | `{slug, version?, responses, demographics}` → `{score_result, result_view}` |
 
+## WordPress bidirectional sync (Phase 4)
+
+Keeps the app's `users` and a WordPress user base in sync **both ways over the WordPress
+REST API only — there is no MySQL access**. **Phone is the join key**, conflicts resolve
+**last-modified-wins**, and all network I/O runs in Celery workers (off the request path).
+Lives in `app/modules/wpsync/` and mirrors the `notifications` module's shape; like every
+module it touches only its own concern — all `users` reads/writes go through
+`identity.service`, never the table directly.
+
+**Off by default.** `WP_SYNC_ENABLED=false` and `WP_CLIENT_BACKEND=fake` (an in-memory
+WordPress), so dev/test/CI never touch the network. Configure the `WP_*` block in
+[`.env.example`](.env.example) and set `WP_SYNC_ENABLED=true` + `WP_CLIENT_BACKEND=http`
+to go live.
+
+### WordPress-side setup (one-time)
+1. Copy [`wordpress/mu-plugins/pst-sync.php`](wordpress/mu-plugins/pst-sync.php) into the
+   site's `wp-content/mu-plugins/`. It exposes the phone usermeta (`billing_phone`, the join
+   key) and a server-managed modified timestamp (`pst_modified_gmt`) to the REST API.
+2. Create a dedicated **least-privilege** account (e.g. `sync-bot`) with the caps
+   `list_users`/`create_users`/`edit_users` (Administrator, or a custom role) and generate an
+   **Application Password** for it. That password is a **secret** — set it only via the
+   environment (`WP_API_APP_PASSWORD`), never commit it.
+
+### How it works
+- **READ (WP → app):** Beat runs a paginated `GET /wp/v2/users?context=edit` every
+  `WP_SYNC_INTERVAL_MINUTES`, upserts each row by phone, and skips rows without a phone. Never
+  deletes. Default `WP_PULL_MODE=full` scans every page (the simplest thing that catches edits;
+  made cheap by an idempotent upsert that only writes when WP is genuinely newer). `incremental`
+  walks newest-first and stops at the first already-known user (efficient new-user pickup).
+- **WRITE (app → WP):** a new local signup (or a local profile edit) enqueues a push after the
+  DB commit → `POST /wp/v2/users`, storing the returned WP id; updates use
+  `POST /wp/v2/users/{id}`. A Beat **reconciler** retries pushes that never linked. With the
+  default `WP_PUSH_POLICY=synthesize`, phone-only signups get a phone-derived username + a
+  placeholder email so the create always succeeds (`defer` / `manual` are the alternatives).
+- **Loop-prevention:** the pull path **never enqueues a push** and **`source='wp'` rows are
+  never pushed** — so a record from one side cannot be bounced back to the other.
+  **Idempotency:** inbound is last-modified-wins (re-pull = no-op); outbound is create-or-update
+  keyed on `wp_user_id`, and a create that collides with an existing WP user **links** it instead
+  of duplicating (re-push = no-op).
+
+### Run it / trigger it
+```bash
+docker compose up beat worker-wpsync      # Beat schedules the pull + reconcile; the worker runs them
+```
+An admin can force either direction now from **`/admin/wpsync`** (CSRF-protected buttons), or
+from the CLI:
+```bash
+docker compose run --rm web python -m app.manage wp-pull   # WP → app, one pass
+docker compose run --rm web python -m app.manage wp-push   # flush pending app → WP (forced)
+```
+
 ## Project layout
 
 ```
@@ -128,9 +179,13 @@ app/
     testing/   models · service · routes
                engine/scoring.py                # generic, MMPI-exact (js_round, compute_scores)
                engine/interpret.py              # rule-based (the AI seam, source='rule')
+    identity/  models · service · routes         # users/orgs, phone/OTP + password auth, sessions
+    notifications/ service · tasks · sms         # Celery `notifications` queue (OTP SMS)
+    wpsync/    client · mapping · service · tasks · routes   # Phase 4 WordPress REST sync
   templates/ · static/ (tokens.css + vendored htmx & chart.js)
-  alembic/                                       # initial migration
-tests/                                           # equivalence + scoring + interpret + definition
+  alembic/                                       # migrations 0001–0004
+tests/                                           # equivalence + scoring + interpret + identity + wpsync
+wordpress/mu-plugins/pst-sync.php                # WP-side: exposes phone + modified meta to REST
 nginx/ · docker-compose.yml · garage.toml · mmpi_v1.json
 ```
 

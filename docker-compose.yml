@@ -14,6 +14,11 @@ x-app-env: &app-env
   # SMS_BACKEND=kavenegar + KAVENEGAR_* in real deployments. Set SEED_ADMIN_PHONE
   # (+ SEED_ADMIN_USERNAME) to provision the first admin on startup.
   SMS_BACKEND: mock
+  # Phase 4: WordPress sync is OFF in dev (the fake client means no network). To go
+  # live, set WP_SYNC_ENABLED=true, WP_CLIENT_BACKEND=http and the WP_* creds via
+  # the environment / .env (the app password is a secret — never hardcode it here).
+  WP_SYNC_ENABLED: "false"
+  WP_CLIENT_BACKEND: fake
 
 services:
   web:
@@ -41,6 +46,34 @@ services:
       dockerfile: app/Dockerfile
     environment: *app-env
     entrypoint: ["celery", "-A", "app.celery_app", "worker", "-Q", "notifications", "-c", "2", "--loglevel=info"]
+    depends_on:
+      redis:
+        condition: service_started
+
+  # Celery worker for the `wpsync` queue (Phase 4 — WordPress REST sync). Needs the
+  # DB (it upserts users via identity.service); no-ops while WP_SYNC_ENABLED=false.
+  worker-wpsync:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    environment: *app-env
+    entrypoint: ["celery", "-A", "app.celery_app", "worker", "-Q", "wpsync", "-c", "2", "--loglevel=info"]
+    depends_on:
+      redis:
+        condition: service_started
+      pgbouncer:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
+  # Celery Beat — drives the periodic WordPress pull + push-reconcile (Phase 4).
+  # Only needs the broker; the tasks self-guard on WP_SYNC_ENABLED.
+  beat:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    environment: *app-env
+    entrypoint: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
     depends_on:
       redis:
         condition: service_started
