@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}همگام‌سازی وردپرس{% endblock %}
+{% block content %}
+<div class="card" style="max-width:40rem;margin:2rem auto;">
+  <h2 class="card-title">همگام‌سازی وردپرس</h2>
+
+  {% if message %}
+  <p class="notice" style="padding:.75rem 1rem;border-radius:.5rem;background:#e6f7f1;color:#00604a;">
+    {{ message }}
+  </p>
+  {% endif %}
+
+  {% if not enabled %}
+  <p class="notice" style="padding:.75rem 1rem;border-radius:.5rem;background:#fef3c7;color:#92400e;">
+    همگام‌سازی هم‌اکنون غیرفعال است. برای فعال‌سازی، <code>WP_SYNC_ENABLED=true</code> و
+    <code>WP_CLIENT_BACKEND=http</code> را همراه با اعتبارنامهٔ وردپرس تنظیم کنید.
+  </p>
+  {% endif %}
+
+  <table style="width:100%;margin:1rem 0;border-collapse:collapse;">
+    <tbody>
+      <tr><th style="text-align:right;padding:.25rem .5rem;">وضعیت</th>
+          <td style="padding:.25rem .5rem;">{{ 'فعال' if enabled else 'غیرفعال' }}</td></tr>
+      <tr><th style="text-align:right;padding:.25rem .5rem;">کلاینت</th>
+          <td style="padding:.25rem .5rem;">{{ backend }}</td></tr>
+      <tr><th style="text-align:right;padding:.25rem .5rem;">آدرس REST</th>
+          <td style="padding:.25rem .5rem;direction:ltr;text-align:left;">{{ rest_base }}</td></tr>
+      <tr><th style="text-align:right;padding:.25rem .5rem;">حالت دریافت</th>
+          <td style="padding:.25rem .5rem;">{{ pull_mode }}</td></tr>
+      <tr><th style="text-align:right;padding:.25rem .5rem;">سیاست ارسال</th>
+          <td style="padding:.25rem .5rem;">{{ push_policy }}</td></tr>
+    </tbody>
+  </table>
+
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+    <form method="post" action="/admin/wpsync/pull">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}" />
+      <button type="submit" class="btn">دریافت از وردپرس (Pull)</button>
+    </form>
+    <form method="post" action="/admin/wpsync/push">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}" />
+      <button type="submit" class="btn">ارسال به وردپرس (Push)</button>
+    </form>
+  </div>
+
+  <p style="margin-top:1rem;color:#64748b;font-size:.875rem;">
+    این عملیات در صف کارگرها قرار می‌گیرد و خارج از مسیر درخواست اجرا می‌شود.
+  </p>
+</div>
+{% endblock %}

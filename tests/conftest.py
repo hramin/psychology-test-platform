@@ -139,6 +139,14 @@ async def db_session(db_engine):
 
 
 @pytest.fixture
+def fake_wp():
+    """A fresh in-memory WordPress for the Phase-4 sync tests (no network)."""
+    from app.modules.wpsync.client import FakeWordPressClient
+
+    return FakeWordPressClient()
+
+
+@pytest.fixture
 def eager_sms(monkeypatch):
     """Run Celery tasks inline and use the mock SMS backend; yields its outbox."""
     from app.celery_app import celery_app

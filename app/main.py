@@ -16,6 +16,7 @@ from app.db import engine
 from app.modules.identity.routes import router as identity_router
 from app.modules.testing.api import router as api_v1_router
 from app.modules.testing.routes import router as testing_router
+from app.modules.wpsync.routes import router as wpsync_router
 
 # Import models so they are registered on Base.metadata (Alembic autogenerate /
 # create_all see them).
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
     app.include_router(identity_router)  # HTML / HTMX  (/auth)
     app.include_router(testing_router)  # HTML / HTMX
     app.include_router(api_v1_router)  # JSON  /api/v1
+    app.include_router(wpsync_router)  # HTML  /admin/wpsync (admin "sync now")
 
     @app.get("/health")
     async def health():
